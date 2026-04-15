@@ -2,11 +2,16 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Control de Dinero</title>
+    <title>Control de Dinero con Firebase</title>
+
+    <!-- Firebase SDK -->
+    <script src="https://proyecto-final-2e4a8-default-rtdb.firebaseio.com"></script>
+    <script src="lnR36eAFqYj3okpIqjvukBwynaEVWHOrdC6vAuaB"></script>
+
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            font-family: Arial;
+            background: #f4f4f4;
             text-align: center;
         }
         .container {
@@ -17,24 +22,12 @@
             border-radius: 10px;
             box-shadow: 0px 0px 10px gray;
         }
-        input {
-            padding: 10px;
-            width: 80%;
-            margin: 10px 0;
-        }
-        button {
+        input, button {
             padding: 10px;
             margin: 5px;
-            cursor: pointer;
-        }
-        #total {
-            font-size: 20px;
-            margin-top: 10px;
-            font-weight: bold;
         }
         ul {
             text-align: left;
-            margin-top: 15px;
         }
     </style>
 </head>
@@ -42,62 +35,114 @@
 
 <div class="container">
     <h2>Control de Dinero</h2>
-    
-    <input type="number" id="cantidad" placeholder="Ingresa cantidad">
+
+    <input type="number" id="cantidad" placeholder="Cantidad">
+
     <br>
-    
+
     <button onclick="depositar()">Depositar</button>
     <button onclick="retirar()">Retirar</button>
-    
+
     <div id="total">Total: $0</div>
-    
+
     <h3>Historial</h3>
     <ul id="historial"></ul>
 </div>
 
-<script>
-    let total = 0;
+<script type="module">
+    // 🔥 TU CONFIGURACIÓN DE FIREBASE
+    const firebaseConfig = {
+        apiKey: "TU_API_KEY",
+        authDomain: "TU_PROYECTO.firebaseapp.com",
+        databaseURL: "https://TU_PROYECTO-default-rtdb.firebaseio.com",
+        projectId: "TU_PROYECTO",
+        storageBucket: "TU_PROYECTO.appspot.com",
+        messagingSenderId: "XXXX",
+        appId: "XXXX"
+    };
 
-    function depositar() {
-        let cantidad = parseFloat(document.getElementById("cantidad").value);
-        
-        if (isNaN(cantidad) || cantidad <= 0) {
-            alert("Ingresa una cantidad válida");
-            return;
-        }
+    // Inicializar Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, push, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        total += cantidad;
-        actualizarTotal();
-        agregarHistorial("Depósito", cantidad);
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const totalRef = ref(db, "total");
+    const historialRef = ref(db, "historial");
+
+    // Escuchar cambios en total
+    onValue(totalRef, (snapshot) => {
+        let total = snapshot.val() || 0;
+        document.getElementById("total").innerText = "Total: $" + total.toFixed(2);
+    });
+
+    // Escuchar historial
+    onValue(historialRef, (snapshot) => {
+        let lista = document.getElementById("historial");
+        lista.innerHTML = "";
+
+        snapshot.forEach((child) => {
+            let data = child.val();
+            let item = document.createElement("li");
+            item.textContent = data.tipo + ": $" + data.cantidad;
+            lista.appendChild(item);
+        });
+    });
+
+    // Obtener total actual
+    async function obtenerTotal() {
+        return new Promise((resolve) => {
+            onValue(totalRef, (snapshot) => {
+                resolve(snapshot.val() || 0);
+            }, { onlyOnce: true });
+        });
     }
 
-    function retirar() {
+    // Depositar
+    window.depositar = async function () {
         let cantidad = parseFloat(document.getElementById("cantidad").value);
 
         if (isNaN(cantidad) || cantidad <= 0) {
-            alert("Ingresa una cantidad válida");
+            alert("Cantidad inválida");
             return;
         }
 
+        let total = await obtenerTotal();
+        total += cantidad;
+
+        set(totalRef, total);
+
+        push(historialRef, {
+            tipo: "Depósito",
+            cantidad: cantidad.toFixed(2)
+        });
+    }
+
+    // Retirar
+    window.retirar = async function () {
+        let cantidad = parseFloat(document.getElementById("cantidad").value);
+
+        if (isNaN(cantidad) || cantidad <= 0) {
+            alert("Cantidad inválida");
+            return;
+        }
+
+        let total = await obtenerTotal();
+
         if (cantidad > total) {
-            alert("No tienes suficiente dinero");
+            alert("Fondos insuficientes");
             return;
         }
 
         total -= cantidad;
-        actualizarTotal();
-        agregarHistorial("Retiro", cantidad);
-    }
 
-    function actualizarTotal() {
-        document.getElementById("total").innerText = "Total: $" + total.toFixed(2);
-    }
+        set(totalRef, total);
 
-    function agregarHistorial(tipo, cantidad) {
-        let lista = document.getElementById("historial");
-        let item = document.createElement("li");
-        item.textContent = tipo + ": $" + cantidad.toFixed(2);
-        lista.appendChild(item);
+        push(historialRef, {
+            tipo: "Retiro",
+            cantidad: cantidad.toFixed(2)
+        });
     }
 </script>
 
