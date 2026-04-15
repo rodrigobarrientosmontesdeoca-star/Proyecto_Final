@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Transferencias Cloud</title>
+<title>Control de Dinero Cloud</title>
 
 <style>
     body {
@@ -30,16 +30,16 @@
     }
 
     .delete-btn {
-        margin-left: 10px;
-        cursor: pointer;
         color: red;
+        cursor: pointer;
+        margin-left: 10px;
     }
 </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>💸 Sistema de Transferencias</h2>
+    <h2>💸 Control de Dinero</h2>
 
     <input type="number" id="cantidad" placeholder="Cantidad">
     <br>
@@ -58,7 +58,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
-    // 🔥 SOLO CAMBIA ESTA URL
+    // 🔥 CAMBIA SOLO ESTA URL
     const firebaseConfig = {
         databaseURL: "https://proyecto-final-2e4a8-default-rtdb.firebaseio.com"
     };
@@ -66,17 +66,18 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // REFERENCIAS
     const totalRef = db.ref("app/total");
     const historialRef = db.ref("app/historial");
 
+    let totalActual = 0;
+
     // 🔄 ACTUALIZAR TOTAL EN TIEMPO REAL
     totalRef.on("value", (snapshot) => {
-        let total = snapshot.val() || 0;
-        document.getElementById("total").innerText = "Total: $" + total.toFixed(2);
+        totalActual = snapshot.val() || 0;
+        document.getElementById("total").innerText = "Total: $" + totalActual.toFixed(2);
     });
 
-    // 🔄 ACTUALIZAR HISTORIAL EN TIEMPO REAL
+    // 🔄 ACTUALIZAR HISTORIAL
     historialRef.on("value", (snapshot) => {
         const lista = document.getElementById("historial");
         lista.innerHTML = "";
@@ -104,18 +105,16 @@
             return;
         }
 
-        totalRef.once("value", (snapshot) => {
-            let total = snapshot.val() || 0;
-            total += cantidad;
+        totalActual += cantidad;
+        totalRef.set(totalActual);
 
-            totalRef.set(total);
-
-            historialRef.push({
-                tipo: "Depósito",
-                cantidad: cantidad,
-                fecha: Date.now()
-            });
+        historialRef.push({
+            tipo: "Depósito",
+            cantidad: cantidad,
+            fecha: Date.now()
         });
+
+        document.getElementById("cantidad").value = "";
     }
 
     // 💸 RETIRAR
@@ -127,24 +126,21 @@
             return;
         }
 
-        totalRef.once("value", (snapshot) => {
-            let total = snapshot.val() || 0;
+        if (cantidad > totalActual) {
+            alert("Fondos insuficientes");
+            return;
+        }
 
-            if (cantidad > total) {
-                alert("Fondos insuficientes");
-                return;
-            }
+        totalActual -= cantidad;
+        totalRef.set(totalActual);
 
-            total -= cantidad;
-
-            totalRef.set(total);
-
-            historialRef.push({
-                tipo: "Retiro",
-                cantidad: cantidad,
-                fecha: Date.now()
-            });
+        historialRef.push({
+            tipo: "Retiro",
+            cantidad: cantidad,
+            fecha: Date.now()
         });
+
+        document.getElementById("cantidad").value = "";
     }
 
     // 🗑️ ELIMINAR TRANSACCIÓN
