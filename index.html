@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Control de Dinero Cloud</title>
+<title>Transferencias Cloud</title>
 
 <style>
     body {
@@ -28,15 +28,20 @@
     ul {
         text-align: left;
     }
+
+    .delete-btn {
+        margin-left: 10px;
+        cursor: pointer;
+        color: red;
+    }
 </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Control de Dinero 💸</h2>
+    <h2>💸 Sistema de Transferencias</h2>
 
     <input type="number" id="cantidad" placeholder="Cantidad">
-
     <br>
 
     <button onclick="depositar()">Depositar</button>
@@ -48,46 +53,49 @@
     <ul id="historial"></ul>
 </div>
 
-<!-- Firebase V8 (igual que tu ejemplo) -->
+<!-- Firebase V8 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
-    // 🔥 SOLO CAMBIA ESTO SI TU URL ES DIFERENTE
+    // 🔥 SOLO CAMBIA ESTA URL
     const firebaseConfig = {
-        databaseURL: "https://proyecto-final-2e4a8-default-rtdb.firebaseio.com
-"
+        databaseURL: "https://proyecto-final-2e4a8-default-rtdb.firebaseio.com"
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     // REFERENCIAS
-    const totalRef = db.ref("dinero/total");
-    const historialRef = db.ref("dinero/historial");
+    const totalRef = db.ref("app/total");
+    const historialRef = db.ref("app/historial");
 
-    // 🔥 LEER TOTAL EN TIEMPO REAL
+    // 🔄 ACTUALIZAR TOTAL EN TIEMPO REAL
     totalRef.on("value", (snapshot) => {
         let total = snapshot.val() || 0;
         document.getElementById("total").innerText = "Total: $" + total.toFixed(2);
     });
 
-    // 🔥 LEER HISTORIAL
+    // 🔄 ACTUALIZAR HISTORIAL EN TIEMPO REAL
     historialRef.on("value", (snapshot) => {
         const lista = document.getElementById("historial");
         lista.innerHTML = "";
 
         snapshot.forEach((child) => {
             const data = child.val();
+            const key = child.key;
 
             const li = document.createElement("li");
-            li.textContent = data.tipo + ": $" + data.cantidad;
+            li.innerHTML = `
+                ${data.tipo}: $${data.cantidad}
+                <span class="delete-btn" onclick="eliminar('${key}')">❌</span>
+            `;
 
             lista.appendChild(li);
         });
     });
 
-    // 🔥 DEPOSITAR
+    // 💰 DEPOSITAR
     function depositar() {
         let cantidad = parseFloat(document.getElementById("cantidad").value);
 
@@ -110,7 +118,7 @@
         });
     }
 
-    // 🔥 RETIRAR
+    // 💸 RETIRAR
     function retirar() {
         let cantidad = parseFloat(document.getElementById("cantidad").value);
 
@@ -137,6 +145,13 @@
                 fecha: Date.now()
             });
         });
+    }
+
+    // 🗑️ ELIMINAR TRANSACCIÓN
+    function eliminar(key) {
+        if(confirm("¿Eliminar esta transacción?")) {
+            historialRef.child(key).remove();
+        }
     }
 </script>
 
