@@ -5,139 +5,102 @@
 <title>Control de Dinero Cloud</title>
 
 <style>
-*{
+body{
 margin:0;
 padding:0;
-box-sizing:border-box;
-}
-
-body{
-font-family:Arial, sans-serif;
-background: linear-gradient(135deg,#1e3c72,#2a5298);
-min-height:100vh;
-display:flex;
-justify-content:center;
-align-items:center;
-padding:30px;
+background:#e8eef7;
+font-family:Arial,sans-serif;
 }
 
 .container{
-background:#ffffff;
-width:420px;
-max-width:100%;
-padding:35px;
-border-radius:25px;
-box-shadow:0 15px 40px rgba(0,0,0,.30);
+width:400px;
+margin:50px auto;
+background:white;
+padding:30px;
+border-radius:20px;
+box-shadow:0 4px 20px rgba(0,0,0,0.2);
 text-align:center;
 }
 
 h2{
-color:#1e3c72;
-font-size:32px;
+color:#1d4ed8;
+font-size:30px;
 margin-bottom:25px;
 }
 
 input{
-width:100%;
-padding:15px;
+width:85%;
+padding:12px;
 font-size:18px;
-border:2px solid #dbeafe;
-border-radius:12px;
-outline:none;
+border:2px solid #93c5fd;
+border-radius:10px;
 margin-bottom:20px;
 }
 
-input:focus{
-border-color:#2563eb;
-}
-
 button{
-border:none;
-padding:14px 25px;
+padding:12px 22px;
 margin:8px;
 font-size:16px;
-font-weight:bold;
-border-radius:12px;
+border:none;
+border-radius:10px;
 cursor:pointer;
-transition:.3s;
+font-weight:bold;
 }
 
 button:hover{
-transform:scale(1.05);
+opacity:.9;
 }
 
-button:nth-of-type(1){
+button:first-of-type{
 background:#2563eb;
 color:white;
 }
 
-button:nth-of-type(2){
+button:last-of-type{
 background:#ef4444;
 color:white;
 }
 
 #total{
-margin-top:25px;
-background:#eff6ff;
-color:#1e3c72;
-padding:20px;
-border-radius:15px;
-font-size:30px;
-font-weight:bold;
+background:#dbeafe;
+padding:18px;
+border-radius:12px;
+color:#1e3a8a;
+margin-top:20px;
+font-size:28px;
 }
 
 h3{
-margin-top:30px;
-margin-bottom:15px;
-color:#1e3c72;
+color:#1e3a8a;
+margin-top:25px;
 }
 
 ul{
 list-style:none;
-text-align:left;
-max-height:260px;
-overflow-y:auto;
 padding:0;
+text-align:left;
 }
 
 li{
-background:#f8fafc;
-margin-bottom:12px;
-padding:14px 15px;
-border-radius:12px;
+background:#f1f5f9;
+margin:10px 0;
+padding:12px;
+border-radius:10px;
 display:flex;
 justify-content:space-between;
 align-items:center;
-border-left:5px solid #2563eb;
 }
 
 .delete-btn{
-background:#ef4444;
+background:red;
 color:white;
-padding:5px 10px;
-border-radius:8px;
-font-size:14px;
+padding:5px 8px;
+border-radius:6px;
 margin-left:10px;
 cursor:pointer;
 }
-
-.delete-btn:hover{
-background:#dc2626;
-}
-
-@media(max-width:500px){
-.container{
-width:95%;
-padding:25px;
-}
-
-button{
-display:block;
-width:100%;
-margin:10px 0;
-}
-}
 </style>
+
 </head>
 <body>
 
@@ -145,6 +108,7 @@ margin:10px 0;
 <h2>💸 Control de Dinero</h2>
 
 <input type="number" id="cantidad" placeholder="Cantidad">
+<br>
 
 <button onclick="depositar()">Depositar</button>
 <button onclick="retirar()">Retirar</button>
@@ -156,7 +120,6 @@ margin:10px 0;
 
 </div>
 
-<!-- Firebase V8 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
@@ -174,21 +137,17 @@ const accionRef = db.ref("app/accion");
 
 let totalActual = 0;
 
-/* Actualizar total */
 totalRef.on("value",(snapshot)=>{
 totalActual = snapshot.val() || 0;
 document.getElementById("total").innerText =
 "Total: $" + totalActual.toFixed(2);
 });
 
-/* Actualizar historial */
 historialRef.on("value",(snapshot)=>{
-
 const lista=document.getElementById("historial");
 lista.innerHTML="";
 
 snapshot.forEach((child)=>{
-
 const data=child.val();
 const key=child.key;
 
@@ -196,23 +155,18 @@ const li=document.createElement("li");
 
 li.innerHTML=`
 ${data.tipo}: $${data.cantidad}
-<span class="delete-btn"
-onclick="eliminar('${key}')">
-❌
-</span>
+<span class="delete-btn" onclick="eliminar('${key}')">❌</span>
 `;
 
 lista.appendChild(li);
-
+});
 });
 
-});
-
-/* Depositar */
 function depositar(){
 
-let cantidad=
-parseFloat(document.getElementById("cantidad").value);
+let cantidad=parseFloat(
+document.getElementById("cantidad").value
+);
 
 if(isNaN(cantidad)||cantidad<=0){
 alert("Cantidad inválida");
@@ -231,14 +185,13 @@ fecha:Date.now()
 accionRef.set("deposito");
 
 document.getElementById("cantidad").value="";
-
 }
 
-/* Retirar */
 function retirar(){
 
-let cantidad=
-parseFloat(document.getElementById("cantidad").value);
+let cantidad=parseFloat(
+document.getElementById("cantidad").value
+);
 
 if(isNaN(cantidad)||cantidad<=0){
 alert("Cantidad inválida");
@@ -262,16 +215,12 @@ fecha:Date.now()
 accionRef.set("retiro");
 
 document.getElementById("cantidad").value="";
-
 }
 
-/* Eliminar */
 function eliminar(key){
-
 if(confirm("¿Eliminar esta transacción?")){
 historialRef.child(key).remove();
 }
-
 }
 </script>
 
