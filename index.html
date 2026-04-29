@@ -1,121 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Control de Dinero Cloud</title>
+
 <style>
 *{
 margin:0;
 padding:0;
 box-sizing:border-box;
-font-family:Segoe UI, Arial, sans-serif;
 }
 
 body{
-background: linear-gradient(135deg,#0f172a,#1e3a8a,#2563eb);
+font-family:Arial, sans-serif;
+background: linear-gradient(135deg,#1e3c72,#2a5298);
 min-height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
 padding:30px;
-color:white;
 }
 
 .container{
+background:#ffffff;
 width:420px;
 max-width:100%;
-background:rgba(255,255,255,0.12);
-backdrop-filter: blur(14px);
 padding:35px;
-border-radius:30px;
-box-shadow:
-0 15px 40px rgba(0,0,0,.35);
+border-radius:25px;
+box-shadow:0 15px 40px rgba(0,0,0,.30);
 text-align:center;
-border:1px solid rgba(255,255,255,.15);
 }
 
 h2{
+color:#1e3c72;
 font-size:32px;
 margin-bottom:25px;
-font-weight:700;
 }
 
 input{
 width:100%;
-padding:16px;
-border:none;
+padding:15px;
+font-size:18px;
+border:2px solid #dbeafe;
+border-radius:12px;
 outline:none;
-border-radius:15px;
 margin-bottom:20px;
-font-size:17px;
-background:rgba(255,255,255,.15);
-color:white;
 }
 
-input::placeholder{
-color:#dbeafe;
+input:focus{
+border-color:#2563eb;
 }
 
 button{
 border:none;
-padding:14px 24px;
+padding:14px 25px;
 margin:8px;
-border-radius:14px;
-font-size:15px;
+font-size:16px;
 font-weight:bold;
+border-radius:12px;
 cursor:pointer;
 transition:.3s;
 }
 
 button:hover{
-transform:translateY(-2px);
+transform:scale(1.05);
 }
 
 button:nth-of-type(1){
-background:linear-gradient(45deg,#06b6d4,#2563eb);
+background:#2563eb;
 color:white;
 }
 
 button:nth-of-type(2){
-background:linear-gradient(45deg,#fb923c,#ef4444);
+background:#ef4444;
 color:white;
 }
 
 #total{
 margin-top:25px;
-padding:22px;
-border-radius:20px;
+background:#eff6ff;
+color:#1e3c72;
+padding:20px;
+border-radius:15px;
 font-size:30px;
-font-weight:700;
-background:linear-gradient(
-135deg,
-rgba(34,197,94,.25),
-rgba(59,130,246,.25)
-);
+font-weight:bold;
 }
 
 h3{
-margin-top:28px;
+margin-top:30px;
 margin-bottom:15px;
+color:#1e3c72;
 }
 
 ul{
 list-style:none;
 text-align:left;
-max-height:250px;
+max-height:260px;
 overflow-y:auto;
+padding:0;
 }
 
 li{
+background:#f8fafc;
+margin-bottom:12px;
+padding:14px 15px;
+border-radius:12px;
 display:flex;
 justify-content:space-between;
 align-items:center;
-background:rgba(255,255,255,.10);
-margin-bottom:12px;
-padding:14px 16px;
-border-radius:14px;
-box-shadow:0 5px 12px rgba(0,0,0,.15);
+border-left:5px solid #2563eb;
 }
 
 .delete-btn{
 background:#ef4444;
-padding:6px 10px;
-border-radius:10px;
+color:white;
+padding:5px 10px;
+border-radius:8px;
+font-size:14px;
 margin-left:10px;
 cursor:pointer;
 }
@@ -131,8 +132,148 @@ padding:25px;
 }
 
 button{
+display:block;
 width:100%;
-margin:8px 0;
+margin:10px 0;
 }
 }
 </style>
+</head>
+<body>
+
+<div class="container">
+<h2>💸 Control de Dinero</h2>
+
+<input type="number" id="cantidad" placeholder="Cantidad">
+
+<button onclick="depositar()">Depositar</button>
+<button onclick="retirar()">Retirar</button>
+
+<h3 id="total">Total: $0</h3>
+
+<h3>Historial</h3>
+<ul id="historial"></ul>
+
+</div>
+
+<!-- Firebase V8 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<script>
+const firebaseConfig = {
+databaseURL: "https://proyecto-final-2e4a8-default-rtdb.firebaseio.com"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const totalRef = db.ref("app/total");
+const historialRef = db.ref("app/historial");
+const accionRef = db.ref("app/accion");
+
+let totalActual = 0;
+
+/* Actualizar total */
+totalRef.on("value",(snapshot)=>{
+totalActual = snapshot.val() || 0;
+document.getElementById("total").innerText =
+"Total: $" + totalActual.toFixed(2);
+});
+
+/* Actualizar historial */
+historialRef.on("value",(snapshot)=>{
+
+const lista=document.getElementById("historial");
+lista.innerHTML="";
+
+snapshot.forEach((child)=>{
+
+const data=child.val();
+const key=child.key;
+
+const li=document.createElement("li");
+
+li.innerHTML=`
+${data.tipo}: $${data.cantidad}
+<span class="delete-btn"
+onclick="eliminar('${key}')">
+❌
+</span>
+`;
+
+lista.appendChild(li);
+
+});
+
+});
+
+/* Depositar */
+function depositar(){
+
+let cantidad=
+parseFloat(document.getElementById("cantidad").value);
+
+if(isNaN(cantidad)||cantidad<=0){
+alert("Cantidad inválida");
+return;
+}
+
+totalActual+=cantidad;
+totalRef.set(totalActual);
+
+historialRef.push({
+tipo:"Depósito",
+cantidad:cantidad,
+fecha:Date.now()
+});
+
+accionRef.set("deposito");
+
+document.getElementById("cantidad").value="";
+
+}
+
+/* Retirar */
+function retirar(){
+
+let cantidad=
+parseFloat(document.getElementById("cantidad").value);
+
+if(isNaN(cantidad)||cantidad<=0){
+alert("Cantidad inválida");
+return;
+}
+
+if(cantidad>totalActual){
+alert("Fondos insuficientes");
+return;
+}
+
+totalActual-=cantidad;
+totalRef.set(totalActual);
+
+historialRef.push({
+tipo:"Retiro",
+cantidad:cantidad,
+fecha:Date.now()
+});
+
+accionRef.set("retiro");
+
+document.getElementById("cantidad").value="";
+
+}
+
+/* Eliminar */
+function eliminar(key){
+
+if(confirm("¿Eliminar esta transacción?")){
+historialRef.child(key).remove();
+}
+
+}
+</script>
+
+</body>
+</html>
