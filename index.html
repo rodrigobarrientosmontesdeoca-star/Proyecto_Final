@@ -1,163 +1,222 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<title>Control de Dinero Cloud</title>
-
 <style>
-    body {
-        background: #0b0b0b;
-        color: white;
-        font-family: Arial;
-        text-align: center;
-    }
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Segoe UI',sans-serif;
+}
 
-    .container {
-        background: rgba(255,255,255,0.05);
-        padding: 20px;
-        margin: 50px auto;
-        width: 350px;
-        border-radius: 10px;
-    }
+body{
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:
+linear-gradient(135deg,#0f172a,#1e3a8a,#312e81);
+overflow:hidden;
+position:relative;
+}
 
-    input, button {
-        padding: 10px;
-        margin: 5px;
-    }
+/* fondo decorativo */
+body::before{
+content:'';
+position:absolute;
+width:500px;
+height:500px;
+background:#38bdf8;
+filter:blur(180px);
+top:-150px;
+left:-120px;
+opacity:.35;
+}
 
-    ul {
-        text-align: left;
-    }
+body::after{
+content:'';
+position:absolute;
+width:450px;
+height:450px;
+background:#8b5cf6;
+filter:blur(180px);
+bottom:-150px;
+right:-100px;
+opacity:.35;
+}
 
-    .delete-btn {
-        color: red;
-        cursor: pointer;
-        margin-left: 10px;
-    }
+.container{
+position:relative;
+z-index:2;
+width:420px;
+padding:35px;
+border-radius:30px;
+background:rgba(255,255,255,.08);
+backdrop-filter:blur(25px);
+-webkit-backdrop-filter:blur(25px);
+border:1px solid rgba(255,255,255,.15);
+box-shadow:
+0 20px 60px rgba(0,0,0,.45),
+inset 0 1px 0 rgba(255,255,255,.1);
+text-align:center;
+color:white;
+}
+
+/* titulo */
+h2{
+font-size:32px;
+font-weight:700;
+margin-bottom:25px;
+letter-spacing:1px;
+background:linear-gradient(to right,#67e8f9,#c084fc);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+/* input */
+input{
+width:100%;
+padding:16px 18px;
+margin-bottom:20px;
+border:none;
+outline:none;
+border-radius:18px;
+background:rgba(255,255,255,.12);
+color:white;
+font-size:17px;
+box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+transition:.3s;
+}
+
+input:focus{
+transform:scale(1.02);
+background:rgba(255,255,255,.18);
+box-shadow:0 0 18px rgba(56,189,248,.35);
+}
+
+input::placeholder{
+color:#cbd5e1;
+}
+
+/* botones */
+button{
+border:none;
+padding:14px 28px;
+margin:8px;
+border-radius:16px;
+font-size:15px;
+font-weight:600;
+cursor:pointer;
+transition:.3s;
+letter-spacing:.5px;
+}
+
+button:nth-of-type(1){
+background:linear-gradient(135deg,#06b6d4,#2563eb);
+color:white;
+box-shadow:0 8px 20px rgba(37,99,235,.4);
+}
+
+button:nth-of-type(2){
+background:linear-gradient(135deg,#f97316,#ef4444);
+color:white;
+box-shadow:0 8px 20px rgba(239,68,68,.35);
+}
+
+button:hover{
+transform:translateY(-3px) scale(1.03);
+}
+
+button:active{
+transform:scale(.97);
+}
+
+/* tarjeta total */
+#total{
+margin-top:28px;
+padding:22px;
+border-radius:22px;
+background:linear-gradient(
+135deg,
+rgba(34,197,94,.18),
+rgba(59,130,246,.15)
+);
+border:1px solid rgba(255,255,255,.1);
+font-size:30px;
+font-weight:700;
+box-shadow:0 8px 30px rgba(0,0,0,.25);
+}
+
+/* historial */
+h3{
+margin-top:28px;
+margin-bottom:15px;
+font-size:22px;
+font-weight:600;
+}
+
+ul{
+list-style:none;
+max-height:280px;
+overflow-y:auto;
+padding-right:8px;
+}
+
+/* scroll */
+ul::-webkit-scrollbar{
+width:6px;
+}
+ul::-webkit-scrollbar-thumb{
+background:#6366f1;
+border-radius:20px;
+}
+
+li{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:14px 18px;
+margin-bottom:12px;
+border-radius:16px;
+background:rgba(255,255,255,.08);
+border:1px solid rgba(255,255,255,.08);
+box-shadow:0 4px 15px rgba(0,0,0,.18);
+font-size:16px;
+transition:.3s;
+}
+
+li:hover{
+transform:translateY(-2px);
+background:rgba(255,255,255,.12);
+}
+
+/* boton eliminar */
+.delete-btn{
+margin-left:15px;
+background:#ef4444;
+padding:6px 10px;
+border-radius:10px;
+color:white;
+transition:.25s;
+}
+
+.delete-btn:hover{
+background:#dc2626;
+transform:scale(1.1);
+}
+
+/* responsive */
+@media(max-width:500px){
+
+.container{
+width:92%;
+padding:28px;
+}
+
+button{
+width:100%;
+margin:8px 0;
+}
+
+#total{
+font-size:24px;
+}
+}
 </style>
-</head>
-<body>
-
-<div class="container">
-    <h2>💸 Control de Dinero</h2>
-
-    <input type="number" id="cantidad" placeholder="Cantidad">
-    <br>
-
-    <button onclick="depositar()">Depositar</button>
-    <button onclick="retirar()">Retirar</button>
-
-    <h3 id="total">Total: $0</h3>
-
-    <h3>Historial</h3>
-    <ul id="historial"></ul>
-</div>
-
-<!-- Firebase V8 -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
-<script>
-    // 🔥 CAMBIA SOLO ESTA URL SI ES NECESARIO
-    const firebaseConfig = {
-        databaseURL: "https://proyecto-final-2e4a8-default-rtdb.firebaseio.com"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // REFERENCIAS
-    const totalRef = db.ref("app/total");
-    const historialRef = db.ref("app/historial");
-    const accionRef = db.ref("app/accion"); // 🔥 PARA ESP32
-
-    let totalActual = 0;
-
-    // 🔄 ACTUALIZAR TOTAL
-    totalRef.on("value", (snapshot) => {
-        totalActual = snapshot.val() || 0;
-        document.getElementById("total").innerText = "Total: $" + totalActual.toFixed(2);
-    });
-
-    // 🔄 ACTUALIZAR HISTORIAL
-    historialRef.on("value", (snapshot) => {
-        const lista = document.getElementById("historial");
-        lista.innerHTML = "";
-
-        snapshot.forEach((child) => {
-            const data = child.val();
-            const key = child.key;
-
-            const li = document.createElement("li");
-            li.innerHTML = `
-                ${data.tipo}: $${data.cantidad}
-                <span class="delete-btn" onclick="eliminar('${key}')">❌</span>
-            `;
-
-            lista.appendChild(li);
-        });
-    });
-
-    // 💰 DEPOSITAR
-    function depositar() {
-        let cantidad = parseFloat(document.getElementById("cantidad").value);
-
-        if (isNaN(cantidad) || cantidad <= 0) {
-            alert("Cantidad inválida");
-            return;
-        }
-
-        totalActual += cantidad;
-        totalRef.set(totalActual);
-
-        historialRef.push({
-            tipo: "Depósito",
-            cantidad: cantidad,
-            fecha: Date.now()
-        });
-
-        // 🔥 AVISO AL ESP32
-        accionRef.set("deposito");
-
-        document.getElementById("cantidad").value = "";
-    }
-
-    // 💸 RETIRAR
-    function retirar() {
-        let cantidad = parseFloat(document.getElementById("cantidad").value);
-
-        if (isNaN(cantidad) || cantidad <= 0) {
-            alert("Cantidad inválida");
-            return;
-        }
-
-        if (cantidad > totalActual) {
-            alert("Fondos insuficientes");
-            return;
-        }
-
-        totalActual -= cantidad;
-        totalRef.set(totalActual);
-
-        historialRef.push({
-            tipo: "Retiro",
-            cantidad: cantidad,
-            fecha: Date.now()
-        });
-
-        // 🔥 AVISO AL ESP32
-        accionRef.set("retiro");
-
-        document.getElementById("cantidad").value = "";
-    }
-
-    // 🗑️ ELIMINAR TRANSACCIÓN
-    function eliminar(key) {
-        if(confirm("¿Eliminar esta transacción?")) {
-            historialRef.child(key).remove();
-        }
-    }
-</script>
-
-</body>
-</html>
