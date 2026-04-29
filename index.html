@@ -3,220 +3,136 @@
 margin:0;
 padding:0;
 box-sizing:border-box;
-font-family:'Segoe UI',sans-serif;
+font-family:Segoe UI, Arial, sans-serif;
 }
 
 body{
+background: linear-gradient(135deg,#0f172a,#1e3a8a,#2563eb);
 min-height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
-background:
-linear-gradient(135deg,#0f172a,#1e3a8a,#312e81);
-overflow:hidden;
-position:relative;
-}
-
-/* fondo decorativo */
-body::before{
-content:'';
-position:absolute;
-width:500px;
-height:500px;
-background:#38bdf8;
-filter:blur(180px);
-top:-150px;
-left:-120px;
-opacity:.35;
-}
-
-body::after{
-content:'';
-position:absolute;
-width:450px;
-height:450px;
-background:#8b5cf6;
-filter:blur(180px);
-bottom:-150px;
-right:-100px;
-opacity:.35;
+padding:30px;
+color:white;
 }
 
 .container{
-position:relative;
-z-index:2;
 width:420px;
+max-width:100%;
+background:rgba(255,255,255,0.12);
+backdrop-filter: blur(14px);
 padding:35px;
 border-radius:30px;
-background:rgba(255,255,255,.08);
-backdrop-filter:blur(25px);
--webkit-backdrop-filter:blur(25px);
-border:1px solid rgba(255,255,255,.15);
 box-shadow:
-0 20px 60px rgba(0,0,0,.45),
-inset 0 1px 0 rgba(255,255,255,.1);
+0 15px 40px rgba(0,0,0,.35);
 text-align:center;
-color:white;
+border:1px solid rgba(255,255,255,.15);
 }
 
-/* titulo */
 h2{
 font-size:32px;
-font-weight:700;
 margin-bottom:25px;
-letter-spacing:1px;
-background:linear-gradient(to right,#67e8f9,#c084fc);
--webkit-background-clip:text;
--webkit-text-fill-color:transparent;
+font-weight:700;
 }
 
-/* input */
 input{
 width:100%;
-padding:16px 18px;
-margin-bottom:20px;
+padding:16px;
 border:none;
 outline:none;
-border-radius:18px;
-background:rgba(255,255,255,.12);
-color:white;
+border-radius:15px;
+margin-bottom:20px;
 font-size:17px;
-box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
-transition:.3s;
-}
-
-input:focus{
-transform:scale(1.02);
-background:rgba(255,255,255,.18);
-box-shadow:0 0 18px rgba(56,189,248,.35);
+background:rgba(255,255,255,.15);
+color:white;
 }
 
 input::placeholder{
-color:#cbd5e1;
+color:#dbeafe;
 }
 
-/* botones */
 button{
 border:none;
-padding:14px 28px;
+padding:14px 24px;
 margin:8px;
-border-radius:16px;
+border-radius:14px;
 font-size:15px;
-font-weight:600;
+font-weight:bold;
 cursor:pointer;
 transition:.3s;
-letter-spacing:.5px;
-}
-
-button:nth-of-type(1){
-background:linear-gradient(135deg,#06b6d4,#2563eb);
-color:white;
-box-shadow:0 8px 20px rgba(37,99,235,.4);
-}
-
-button:nth-of-type(2){
-background:linear-gradient(135deg,#f97316,#ef4444);
-color:white;
-box-shadow:0 8px 20px rgba(239,68,68,.35);
 }
 
 button:hover{
-transform:translateY(-3px) scale(1.03);
+transform:translateY(-2px);
 }
 
-button:active{
-transform:scale(.97);
+button:nth-of-type(1){
+background:linear-gradient(45deg,#06b6d4,#2563eb);
+color:white;
 }
 
-/* tarjeta total */
+button:nth-of-type(2){
+background:linear-gradient(45deg,#fb923c,#ef4444);
+color:white;
+}
+
 #total{
-margin-top:28px;
+margin-top:25px;
 padding:22px;
-border-radius:22px;
-background:linear-gradient(
-135deg,
-rgba(34,197,94,.18),
-rgba(59,130,246,.15)
-);
-border:1px solid rgba(255,255,255,.1);
+border-radius:20px;
 font-size:30px;
 font-weight:700;
-box-shadow:0 8px 30px rgba(0,0,0,.25);
+background:linear-gradient(
+135deg,
+rgba(34,197,94,.25),
+rgba(59,130,246,.25)
+);
 }
 
-/* historial */
 h3{
 margin-top:28px;
 margin-bottom:15px;
-font-size:22px;
-font-weight:600;
 }
 
 ul{
 list-style:none;
-max-height:280px;
+text-align:left;
+max-height:250px;
 overflow-y:auto;
-padding-right:8px;
-}
-
-/* scroll */
-ul::-webkit-scrollbar{
-width:6px;
-}
-ul::-webkit-scrollbar-thumb{
-background:#6366f1;
-border-radius:20px;
 }
 
 li{
 display:flex;
 justify-content:space-between;
 align-items:center;
-padding:14px 18px;
+background:rgba(255,255,255,.10);
 margin-bottom:12px;
-border-radius:16px;
-background:rgba(255,255,255,.08);
-border:1px solid rgba(255,255,255,.08);
-box-shadow:0 4px 15px rgba(0,0,0,.18);
-font-size:16px;
-transition:.3s;
+padding:14px 16px;
+border-radius:14px;
+box-shadow:0 5px 12px rgba(0,0,0,.15);
 }
 
-li:hover{
-transform:translateY(-2px);
-background:rgba(255,255,255,.12);
-}
-
-/* boton eliminar */
 .delete-btn{
-margin-left:15px;
 background:#ef4444;
 padding:6px 10px;
 border-radius:10px;
-color:white;
-transition:.25s;
+margin-left:10px;
+cursor:pointer;
 }
 
 .delete-btn:hover{
 background:#dc2626;
-transform:scale(1.1);
 }
 
-/* responsive */
 @media(max-width:500px){
-
 .container{
-width:92%;
-padding:28px;
+width:95%;
+padding:25px;
 }
 
 button{
 width:100%;
 margin:8px 0;
-}
-
-#total{
-font-size:24px;
 }
 }
 </style>
