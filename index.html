@@ -3,55 +3,55 @@
 <head>
 <meta charset="UTF-8">
 <title>Control de Dinero Cloud</title>
-
 <style>
 body {
-    background: #0b0b0b;
-    color: white;
-    font-family: Arial;
-    text-align: center;
+background: #0b0b0b;
+color: white;
+font-family: Arial;
+text-align: center;
 }
 
 .container {
-    background: rgba(255,255,255,0.05);
-    padding: 20px;
-    margin: 50px auto;
-    width: 350px;
-    border-radius: 10px;
+background: rgba(255,255,255,0.05);
+padding: 20px;
+margin: 50px auto;
+width: 350px;
+border-radius: 10px;
 }
 
 input, button {
-    padding: 10px;
-    margin: 5px;
+padding: 10px;
+margin: 5px;
 }
 
 ul {
-    text-align: left;
+text-align: left;
 }
 
 .delete-btn {
-    color: red;
-    cursor: pointer;
-    margin-left: 10px;
+color: red;
+cursor: pointer;
+margin-left: 10px;
 }
 </style>
-
 </head>
+
 <body>
 
 <div class="container">
-    <h2>💸 Control de Dinero</h2>
+<h2>💸 Control de Dinero</h2>
 
-    <input type="number" id="cantidad" placeholder="Cantidad">
-    <br>
+<input type="number" id="cantidad" placeholder="Cantidad">
+<br>
 
-    <button onclick="depositar()">Depositar</button>
-    <button onclick="retirar()">Retirar</button>
+<button onclick="depositar()">Depositar</button>
+<button onclick="retirar()">Retirar</button>
 
-    <h3 id="total">Total: $0</h3>
+<h3 id="total">Total: $0</h3>
 
-    <h3>Historial</h3>
-    <ul id="historial"></ul>
+<h3>Historial</h3>
+<ul id="historial"></ul>
+
 </div>
 
 <!-- Firebase V8 -->
@@ -62,7 +62,7 @@ ul {
 
 // 🔥 CAMBIA SOLO ESTA URL SI ES NECESARIO
 const firebaseConfig = {
-    databaseURL: "https://proyecto-final-2e4a8-default-rtdb.firebaseio.com"
+databaseURL: "https://proyecto-final-2e4a8-default-rtdb.firebaseio.com"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -79,10 +79,10 @@ let totalActual = 0;
 // 🔄 ACTUALIZAR TOTAL
 totalRef.on("value", (snapshot) => {
 
-    totalActual = snapshot.val() || 0;
+totalActual = snapshot.val() || 0;
 
-    document.getElementById("total").innerText =
-    "Total: $" + totalActual.toFixed(2);
+document.getElementById("total").innerText =
+"Total: $" + totalActual.toFixed(2);
 
 });
 
@@ -90,27 +90,23 @@ totalRef.on("value", (snapshot) => {
 // 🔄 ACTUALIZAR HISTORIAL
 historialRef.on("value", (snapshot) => {
 
-    const lista = document.getElementById("historial");
-    lista.innerHTML = "";
+const lista = document.getElementById("historial");
+lista.innerHTML = "";
 
-    snapshot.forEach((child) => {
+snapshot.forEach((child) => {
 
-        const data = child.val();
-        const key = child.key;
+const data = child.val();
+const key = child.key;
 
-        const li = document.createElement("li");
+const li = document.createElement("li");
 
-        li.innerHTML = `
-            ${data.tipo}: $${data.cantidad}
-            <span class="delete-btn"
-            onclick="eliminar('${key}')">
-            ❌
-            </span>
-        `;
+li.innerHTML = ${data.tipo}: $${data.cantidad}
+<span class="delete-btn" onclick="eliminar('${key}')">❌</span>
+;
 
-        lista.appendChild(li);
+lista.appendChild(li);
 
-    });
+});
 
 });
 
@@ -118,68 +114,74 @@ historialRef.on("value", (snapshot) => {
 // 💰 DEPOSITAR
 function depositar() {
 
-    let cantidad =
-    parseFloat(document.getElementById("cantidad").value);
+let cantidad = parseFloat(
+document.getElementById("cantidad").value
+);
 
-    if (isNaN(cantidad) || cantidad <= 0) {
-        alert("Cantidad inválida");
-        return;
-    }
+if (isNaN(cantidad) || cantidad <= 0) {
+alert("Cantidad inválida");
+return;
+}
 
-    totalActual += cantidad;
-    totalRef.set(totalActual);
+totalActual += cantidad;
+totalRef.set(totalActual);
 
-    historialRef.push({
-        tipo: "Depósito",
-        cantidad: cantidad,
-        fecha: Date.now()
-    });
+historialRef.push({
+tipo: "Depósito",
+cantidad: cantidad,
+fecha: Date.now()
+});
 
-    // 🔥 AVISO AL ESP32
-    accionRef.set("deposito");
+// 🔥 AVISO AL ESP32
+accionRef.set("deposito");
 
-    document.getElementById("cantidad").value = "";
+document.getElementById("cantidad").value = "";
+
 }
 
 
 // 💸 RETIRAR
 function retirar() {
 
-    let cantidad =
-    parseFloat(document.getElementById("cantidad").value);
+let cantidad = parseFloat(
+document.getElementById("cantidad").value
+);
 
-    if (isNaN(cantidad) || cantidad <= 0) {
-        alert("Cantidad inválida");
-        return;
-    }
+if (isNaN(cantidad) || cantidad <= 0) {
+alert("Cantidad inválida");
+return;
+}
 
-    if (cantidad > totalActual) {
-        alert("Fondos insuficientes");
-        return;
-    }
+if (cantidad > totalActual) {
+alert("Fondos insuficientes");
+return;
+}
 
-    totalActual -= cantidad;
-    totalRef.set(totalActual);
+totalActual -= cantidad;
+totalRef.set(totalActual);
 
-    historialRef.push({
-        tipo: "Retiro",
-        cantidad: cantidad,
-        fecha: Date.now()
-    });
+historialRef.push({
+tipo: "Retiro",
+cantidad: cantidad,
+fecha: Date.now()
+});
 
-    // 🔥 AVISO AL ESP32
-    accionRef.set("retiro");
+// 🔥 AVISO AL ESP32
+accionRef.set("retiro");
 
-    document.getElementById("cantidad").value = "";
+document.getElementById("cantidad").value = "";
+
 }
 
 
 // 🗑️ ELIMINAR TRANSACCIÓN
 function eliminar(key) {
 
-    if(confirm("¿Eliminar esta transacción?")) {
-        historialRef.child(key).remove();
-    }
+if(confirm("¿Eliminar esta transacción?")) {
+
+historialRef.child(key).remove();
+
+}
 
 }
 
