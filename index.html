@@ -12,7 +12,6 @@
       margin: 0;
       padding: 0;
     }
-
     .container {
       background: rgba(255, 255, 255, 0.08);
       padding: 30px;
@@ -20,91 +19,12 @@
       width: 400px;
       border-radius: 15px;
       box-shadow: 0 8px 20px rgba(0,0,0,0.6);
-      transition: transform 0.3s ease;
     }
-
-    .container:hover {
-      transform: scale(1.02);
-    }
-
-    h2 {
-      margin-bottom: 20px;
-      color: #00ffcc;
-      text-shadow: 0 0 10px #00ffcc;
-    }
-
-    input {
-      padding: 12px;
-      margin: 10px 0;
-      width: 80%;
-      border: none;
-      border-radius: 8px;
-      outline: none;
-      background: #222;
-      color: #fff;
-      font-size: 14px;
-      transition: box-shadow 0.3s ease;
-    }
-
-    input:focus {
-      box-shadow: 0 0 10px #00ffcc;
-    }
-
-    button {
-      padding: 12px 20px;
-      margin: 10px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      background: linear-gradient(135deg, #00ffcc, #0099ff);
-      color: #0b0b0b;
-      transition: background 0.3s ease, transform 0.2s ease;
-    }
-
-    button:hover {
-      background: linear-gradient(135deg, #0099ff, #00ffcc);
-      transform: translateY(-2px);
-    }
-
-    h3 {
-      margin-top: 20px;
-      color: #ffcc00;
-      text-shadow: 0 0 8px #ffcc00;
-    }
-
-    ul {
-      text-align: left;
-      list-style: none;
-      padding: 0;
-      margin-top: 15px;
-    }
-
-    ul li {
-      background: rgba(255,255,255,0.05);
-      padding: 10px;
-      margin: 5px 0;
-      border-radius: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: background 0.3s ease;
-    }
-
-    ul li:hover {
-      background: rgba(255,255,255,0.15);
-    }
-
-    .delete-btn {
-      color: #ff4444;
-      cursor: pointer;
-      font-size: 18px;
-      transition: transform 0.2s ease;
-    }
-
-    .delete-btn:hover {
-      transform: scale(1.2);
-    }
+    h2 { color: #00ffcc; text-shadow: 0 0 10px #00ffcc; }
+    input, button { margin: 10px; padding: 12px; border-radius: 8px; }
+    ul { list-style: none; padding: 0; }
+    ul li { display: flex; justify-content: space-between; }
+    .delete-btn { color: #ff4444; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -123,29 +43,30 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <script>
-    // 🔥 CAMBIA SOLO ESTA URL SI ES NECESARIO
+    // ⚠️ CONFIGURACIÓN COMPLETA DE FIREBASE
     const firebaseConfig = {
-      databaseURL: "https://proyecto-final-2e4a8-default-rtdb.firebaseio.com"
+      apiKey: "TU_API_KEY",
+      authDomain: "proyecto-final-2e4a8.firebaseapp.com",
+      databaseURL: "https://proyecto-final-2e4a8-default-rtdb.firebaseio.com",
+      projectId: "proyecto-final-2e4a8",
+      storageBucket: "proyecto-final-2e4a8.appspot.com",
+      messagingSenderId: "TU_SENDER_ID",
+      appId: "lnR36eAFqYj3okpIqjvukBwynaEVWHOrdC6vAuaB"
     };
     firebase.initializeApp(firebaseConfig);
 
     const db = firebase.database();
-
-    // REFERENCIAS
     const totalRef = db.ref("app/total");
     const historialRef = db.ref("app/historial");
     const accionRef = db.ref("app/accion");
 
-    // 🔥 PARA ESP32
     let totalActual = 0;
 
-    // 🔄 ACTUALIZAR TOTAL
     totalRef.on("value", (snapshot) => {
       totalActual = snapshot.val() || 0;
       document.getElementById("total").innerText = "Total: $" + totalActual.toFixed(2);
     });
 
-    // 🔄 ACTUALIZAR HISTORIAL
     historialRef.on("value", (snapshot) => {
       const lista = document.getElementById("historial");
       lista.innerHTML = "";
@@ -158,13 +79,9 @@
       });
     });
 
-    // 💰 DEPOSITAR
     function depositar() {
       let cantidad = parseFloat(document.getElementById("cantidad").value);
-      if (isNaN(cantidad) || cantidad <= 0) {
-        alert("Cantidad inválida");
-        return;
-      }
+      if (isNaN(cantidad) || cantidad <= 0) { alert("Cantidad inválida"); return; }
       totalActual += cantidad;
       totalRef.set(totalActual);
       historialRef.push({ tipo: "Depósito", cantidad: cantidad, fecha: Date.now() });
@@ -172,17 +89,10 @@
       document.getElementById("cantidad").value = "";
     }
 
-    // 💸 RETIRAR
     function retirar() {
       let cantidad = parseFloat(document.getElementById("cantidad").value);
-      if (isNaN(cantidad) || cantidad <= 0) {
-        alert("Cantidad inválida");
-        return;
-      }
-      if (cantidad > totalActual) {
-        alert("Fondos insuficientes");
-        return;
-      }
+      if (isNaN(cantidad) || cantidad <= 0) { alert("Cantidad inválida"); return; }
+      if (cantidad > totalActual) { alert("Fondos insuficientes"); return; }
       totalActual -= cantidad;
       totalRef.set(totalActual);
       historialRef.push({ tipo: "Retiro", cantidad: cantidad, fecha: Date.now() });
@@ -190,7 +100,6 @@
       document.getElementById("cantidad").value = "";
     }
 
-    // 🗑️ ELIMINAR TRANSACCIÓN
     function eliminar(key) {
       if(confirm("¿Eliminar esta transacción?")) {
         historialRef.child(key).remove();
@@ -199,3 +108,4 @@
   </script>
 </body>
 </html>
+
