@@ -3,55 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <title>Control de Dinero Cloud</title>
+
   <style>
     body {
       background: linear-gradient(135deg, #0b0b0b, #1a1a1a);
-      color: #f5f5f5;
-      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #fff;
+      font-family: Arial;
       text-align: center;
-      margin: 0;
-      padding: 0;
     }
 
     .container {
-      background: rgba(255, 255, 255, 0.08);
-      padding: 30px;
       margin: 60px auto;
-      width: 400px;
-      border-radius: 15px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+      width: 350px;
+      padding: 25px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.08);
     }
 
-    h2 { color: #00ffcc; }
-    input {
-      padding: 12px;
-      margin: 10px 0;
-      width: 80%;
+    input, button {
+      padding: 10px;
+      margin: 8px;
       border-radius: 8px;
-      background: #222;
-      color: #fff;
       border: none;
     }
 
     button {
-      padding: 12px 20px;
-      margin: 10px;
-      border-radius: 8px;
-      border: none;
+      background: #00ffcc;
       cursor: pointer;
-      font-weight: bold;
-      background: linear-gradient(135deg, #00ffcc, #0099ff);
     }
 
-    h3 { color: #ffcc00; }
-
-    ul { list-style: none; padding: 0; }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
 
     li {
-      background: rgba(255,255,255,0.05);
-      padding: 10px;
-      margin: 5px 0;
-      border-radius: 8px;
+      background: rgba(255,255,255,0.1);
+      margin: 5px;
+      padding: 8px;
+      border-radius: 6px;
       display: flex;
       justify-content: space-between;
     }
@@ -64,139 +54,136 @@
 </head>
 
 <body>
-  <div class="container">
-    <h2>💸 Control de Dinero</h2>
 
-    <input type="number" id="cantidad" placeholder="Cantidad">
+<div class="container">
+  <h2>💸 Control de Dinero</h2>
 
-    <br>
-    <button onclick="depositar()">Depositar</button>
-    <button onclick="retirar()">Retirar</button>
+  <input type="number" id="cantidad" placeholder="Cantidad">
 
-    <h3 id="total">Total: $0</h3>
+  <br>
+  <button onclick="depositar()">Depositar</button>
+  <button onclick="retirar()">Retirar</button>
 
-    <h3>Historial</h3>
-    <ul id="historial"></ul>
-  </div>
+  <h3 id="total">Total: $0</h3>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <h3>Historial</h3>
+  <ul id="historial"></ul>
+</div>
 
-  <script>
-    // 🔥 CONFIG COMPLETA (CAMBIA SI ES NECESARIO)
-    const firebaseConfig = {
-      apiKey: "TU_API_KEY",
-      authDomain: "proyecto-final-2e4a8.firebaseapp.com",
-      databaseURL: "https://proyecto-final-2e4a8-default-rtdb.firebaseio.com",
-      projectId: "proyecto-final-2e4a8",
-      storageBucket: "proyecto-final-2e4a8.appspot.com",
-      messagingSenderId: "TU_ID",
-      appId: "TU_APP_ID"
-    };
+<!-- Firebase v8 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+<script>
+  // 🔥 SOLO databaseURL (como tu proyecto)
+  const firebaseConfig = {
+    databaseURL: "https://proyecto-final-2e4a8-default-rtdb.firebaseio.com"
+  };
 
-    const totalRef = db.ref("app/total");
-    const historialRef = db.ref("app/historial");
-    const accionRef = db.ref("app/accion");
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-    let totalActual = 0;
+  const totalRef = db.ref("app/total");
+  const historialRef = db.ref("app/historial");
 
-    // 🔄 TOTAL
-    totalRef.on("value", (snapshot) => {
-      totalActual = snapshot.val() || 0;
-      document.getElementById("total").innerText =
-        "Total: $" + totalActual.toFixed(2);
+  let totalActual = 0;
+
+  // 🔄 ESCUCHAR TOTAL
+  totalRef.on("value", snap => {
+    totalActual = snap.val() || 0;
+    document.getElementById("total").innerText =
+      "Total: $" + totalActual.toFixed(2);
+  });
+
+  // 🔄 ESCUCHAR HISTORIAL
+  historialRef.on("value", snap => {
+    const lista = document.getElementById("historial");
+    lista.innerHTML = "";
+
+    snap.forEach(child => {
+      const data = child.val();
+      const key = child.key;
+
+      const li = document.createElement("li");
+      li.innerHTML = `
+        ${data.tipo}: $${data.cantidad}
+        <span class="delete-btn" onclick="eliminar('${key}')">❌</span>
+      `;
+
+      lista.appendChild(li);
     });
+  });
 
-    // 🔄 HISTORIAL
-    historialRef.on("value", (snapshot) => {
-      const lista = document.getElementById("historial");
-      lista.innerHTML = "";
+  // 💰 DEPOSITAR
+  function depositar() {
+    const input = document.getElementById("cantidad");
+    const cantidad = parseFloat(input.value);
 
-      let datos = [];
+    if (isNaN(cantidad) || cantidad <= 0) {
+      alert("Cantidad inválida");
+      return;
+    }
 
-      snapshot.forEach((child) => {
-        datos.push({ key: child.key, ...child.val() });
+    const nuevoTotal = totalActual + cantidad;
+
+    totalRef.set(nuevoTotal)
+      .then(() => {
+        return historialRef.push({
+          tipo: "Depósito",
+          cantidad: cantidad,
+          fecha: Date.now()
+        });
+      })
+      .then(() => {
+        input.value = "";
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Error al guardar (revisa reglas)");
       });
+  }
 
-      // Ordenar por fecha (más nuevo primero)
-      datos.sort((a, b) => b.fecha - a.fecha);
+  // 💸 RETIRAR
+  function retirar() {
+    const input = document.getElementById("cantidad");
+    const cantidad = parseFloat(input.value);
 
-      datos.forEach((data) => {
-        const li = document.createElement("li");
-        li.innerHTML = `
-          ${data.tipo}: $${data.cantidad}
-          <span class="delete-btn" onclick="eliminar('${data.key}')">❌</span>
-        `;
-        lista.appendChild(li);
+    if (isNaN(cantidad) || cantidad <= 0) {
+      alert("Cantidad inválida");
+      return;
+    }
+
+    if (cantidad > totalActual) {
+      alert("Fondos insuficientes");
+      return;
+    }
+
+    const nuevoTotal = totalActual - cantidad;
+
+    totalRef.set(nuevoTotal)
+      .then(() => {
+        return historialRef.push({
+          tipo: "Retiro",
+          cantidad: cantidad,
+          fecha: Date.now()
+        });
+      })
+      .then(() => {
+        input.value = "";
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Error al guardar");
       });
-    });
+  }
 
-    // 💰 DEPOSITAR
-    function depositar() {
-      let cantidad = parseFloat(document.getElementById("cantidad").value);
-
-      if (!cantidad || cantidad <= 0) {
-        alert("Cantidad inválida");
-        return;
-      }
-
-      let nuevoTotal = totalActual + cantidad;
-
-      totalRef.set(nuevoTotal)
-        .then(() => {
-          historialRef.push({
-            tipo: "Depósito",
-            cantidad: cantidad,
-            fecha: Date.now()
-          });
-
-          accionRef.set("deposito");
-          document.getElementById("cantidad").value = "";
-        })
-        .catch(err => console.error("Error:", err));
+  // 🗑️ ELIMINAR
+  function eliminar(key) {
+    if (confirm("¿Eliminar?")) {
+      historialRef.child(key).remove();
     }
+  }
+</script>
 
-    // 💸 RETIRAR
-    function retirar() {
-      let cantidad = parseFloat(document.getElementById("cantidad").value);
-
-      if (!cantidad || cantidad <= 0) {
-        alert("Cantidad inválida");
-        return;
-      }
-
-      if (cantidad > totalActual) {
-        alert("Fondos insuficientes");
-        return;
-      }
-
-      let nuevoTotal = totalActual - cantidad;
-
-      totalRef.set(nuevoTotal)
-        .then(() => {
-          historialRef.push({
-            tipo: "Retiro",
-            cantidad: cantidad,
-            fecha: Date.now()
-          });
-
-          accionRef.set("retiro");
-          document.getElementById("cantidad").value = "";
-        })
-        .catch(err => console.error("Error:", err));
-    }
-
-    // 🗑️ ELIMINAR
-    function eliminar(key) {
-      if (confirm("¿Eliminar transacción?")) {
-        historialRef.child(key).remove()
-          .catch(err => console.error("Error:", err));
-      }
-    }
-  </script>
 </body>
 </html>
