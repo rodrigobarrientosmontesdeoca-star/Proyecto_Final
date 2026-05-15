@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Control de Dinero</title>
+  <title>Control de Dinero Cloud</title>
 
   <style>
     body {
@@ -70,37 +70,65 @@
   <ul id="historial"></ul>
 </div>
 
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
 <script>
+  // 🔥 CONFIG (tuya)
+  const firebaseConfig = {
+    databaseURL: "https://proyecto-final-2e4a8-default-rtdb.firebaseio.com"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const totalRef = db.ref("app/total");
+  const historialRef = db.ref("app/historial");
+
   let total = 0;
   let historial = [];
 
-  // 🔄 Cargar datos (seguro)
-  function cargarDatos() {
+  // 🔄 Cargar LOCAL
+  function cargarLocal() {
     try {
-      const t = localStorage.getItem("total");
-      const h = localStorage.getItem("historial");
-
-      total = t ? parseFloat(t) : 0;
-      historial = h ? JSON.parse(h) : [];
-
-    } catch (e) {
-      console.warn("localStorage bloqueado, usando memoria");
+      total = parseFloat(localStorage.getItem("total")) || 0;
+      historial = JSON.parse(localStorage.getItem("historial")) || [];
+    } catch {
       total = 0;
       historial = [];
     }
   }
 
-  // 💾 Guardar datos (seguro)
-  function guardarDatos() {
+  // 💾 Guardar LOCAL
+  function guardarLocal() {
     try {
       localStorage.setItem("total", total);
       localStorage.setItem("historial", JSON.stringify(historial));
-    } catch (e) {
-      console.warn("No se pudo guardar, pero la app sigue funcionando");
-    }
+    } catch {}
   }
 
-  // 🔄 Actualizar UI
+  // ☁️ ESCUCHAR FIREBASE
+  totalRef.on("value", snap => {
+    if (snap.exists()) {
+      total = snap.val();
+      guardarLocal();
+      actualizarUI();
+    }
+  });
+
+  historialRef.on("value", snap => {
+    if (snap.exists()) {
+      historial = [];
+      snap.forEach(child => {
+        historial.push({ key: child.key, ...child.val() });
+      });
+      guardarLocal();
+      actualizarUI();
+    }
+  });
+
+  // 🔄 UI
   function actualizarUI() {
     document.getElementById("total").innerText =
       "Total: $" + total.toFixed(2);
@@ -108,12 +136,12 @@
     const lista = document.getElementById("historial");
     lista.innerHTML = "";
 
-    historial.slice().reverse().forEach((item, index) => {
+    historial.slice().reverse().forEach(item => {
       const li = document.createElement("li");
 
       li.innerHTML = `
         ${item.tipo}: $${item.cantidad}
-        <span class="delete-btn" onclick="eliminar(${historial.length - 1 - index})">❌</span>
+        <span class="delete-btn" onclick="eliminar('${item.key || ''}')">❌</span>
       `;
 
       lista.appendChild(li);
@@ -132,13 +160,20 @@
 
     total += cantidad;
 
-    historial.push({
+    const nuevo = {
       tipo: "Depósito",
-      cantidad: cantidad
-    });
+      cantidad: cantidad,
+      fecha: Date.now()
+    };
 
-    guardarDatos();
+    historial.push(nuevo);
+
+    guardarLocal();
     actualizarUI();
+
+    // ☁️ Intentar guardar en Firebase
+    totalRef.set(total).catch(()=>{});
+    historialRef.push(nuevo).catch(()=>{});
 
     input.value = "";
   }
@@ -160,26 +195,36 @@
 
     total -= cantidad;
 
-    historial.push({
+    const nuevo = {
       tipo: "Retiro",
-      cantidad: cantidad
-    });
+      cantidad: cantidad,
+      fecha: Date.now()
+    };
 
-    guardarDatos();
+    historial.push(nuevo);
+
+    guardarLocal();
     actualizarUI();
+
+    // ☁️ Firebase
+    totalRef.set(total).catch(()=>{});
+    historialRef.push(nuevo).catch(()=>{});
 
     input.value = "";
   }
 
   // 🗑️ Eliminar
-  function eliminar(index) {
-    historial.splice(index, 1);
-    guardarDatos();
-    actualizarUI();
+  function eliminar(key) {
+    if (!key) {
+      alert("Solo se puede eliminar si está en la nube");
+      return;
+    }
+
+    historialRef.child(key).remove().catch(()=>{});
   }
 
-  // 🚀 INICIAR
-  cargarDatos();
+  // 🚀 INICIO
+  cargarLocal();
   actualizarUI();
 </script>
 
