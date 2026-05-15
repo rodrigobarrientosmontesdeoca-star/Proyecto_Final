@@ -1,232 +1,333 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Control de Dinero Cloud</title>
+<meta charset="UTF-8">
+<title>Control de Dinero Cloud</title>
+<style>
 
-  <style>
-    body {
-      background: #111;
-      color: white;
-      font-family: Arial;
-      text-align: center;
-    }
+     body {
 
+       background: linear-gradient(135deg, #0b0b0b, #1a1a1a);
+
+       color: #f5f5f5;
+
+       font-family: 'Segoe UI', Arial, sans-serif;
+
+       text-align: center;
+
+       margin: 0;
+
+       padding: 0;
+
+     }
+ 
     .container {
-      margin: 50px auto;
-      width: 350px;
-      padding: 20px;
-      border-radius: 10px;
-      background: #222;
-    }
 
-    input, button {
-      padding: 10px;
-      margin: 8px;
-      border-radius: 8px;
-      border: none;
-    }
+       background: rgba(255, 255, 255, 0.08);
 
+       padding: 30px;
+
+       margin: 60px auto;
+
+       width: 400px;
+
+       border-radius: 15px;
+
+       box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+
+       transition: transform 0.3s ease;
+
+     }
+ 
+    .container:hover {
+
+       transform: scale(1.02);
+
+     }
+ 
+    h2 {
+
+       margin-bottom: 20px;
+
+       color: #00ffcc;
+
+       text-shadow: 0 0 10px #00ffcc;
+
+     }
+ 
+    input {
+
+       padding: 12px;
+
+       margin: 10px 0;
+
+       width: 80%;
+
+       border: none;
+
+       border-radius: 8px;
+
+       outline: none;
+
+       background: #222;
+
+       color: #fff;
+
+       font-size: 14px;
+
+       transition: box-shadow 0.3s ease;
+
+     }
+ 
+    input:focus {
+
+       box-shadow: 0 0 10px #00ffcc;
+
+     }
+ 
     button {
-      background: #00ffcc;
-      cursor: pointer;
-    }
 
+       padding: 12px 20px;
+
+       margin: 10px;
+
+       border: none;
+
+       border-radius: 8px;
+
+       cursor: pointer;
+
+       font-weight: bold;
+
+       background: linear-gradient(135deg, #00ffcc, #0099ff);
+
+       color: #0b0b0b;
+
+       transition: background 0.3s ease, transform 0.2s ease;
+
+     }
+ 
+    button:hover {
+
+       background: linear-gradient(135deg, #0099ff, #00ffcc);
+
+       transform: translateY(-2px);
+
+     }
+ 
+    h3 {
+
+       margin-top: 20px;
+
+       color: #ffcc00;
+
+       text-shadow: 0 0 8px #ffcc00;
+
+     }
+ 
     ul {
-      list-style: none;
-      padding: 0;
-    }
 
-    li {
-      background: #333;
-      margin: 5px;
-      padding: 8px;
-      border-radius: 6px;
-      display: flex;
-      justify-content: space-between;
-    }
+       text-align: left;
 
+       list-style: none;
+
+       padding: 0;
+
+       margin-top: 15px;
+
+     }
+ 
+    ul li {
+
+       background: rgba(255,255,255,0.05);
+
+       padding: 10px;
+
+       margin: 5px 0;
+
+       border-radius: 8px;
+
+       display: flex;
+
+       justify-content: space-between;
+
+       align-items: center;
+
+       transition: background 0.3s ease;
+
+     }
+ 
+    ul li:hover {
+
+       background: rgba(255,255,255,0.15);
+
+     }
+ 
     .delete-btn {
-      color: red;
-      cursor: pointer;
-    }
-  </style>
+
+       color: #ff4444;
+
+       cursor: pointer;
+
+       font-size: 18px;
+
+       transition: transform 0.2s ease;
+
+     }
+ 
+    .delete-btn:hover {
+
+       transform: scale(1.2);
+
+     }
+</style>
 </head>
-
 <body>
-
 <div class="container">
-  <h2>💸 Control de Dinero</h2>
-
-  <input type="number" id="cantidad" placeholder="Cantidad">
-
-  <br>
-  <button onclick="depositar()">Depositar</button>
-  <button onclick="retirar()">Retirar</button>
-
-  <h3 id="total">Total: $0</h3>
-
-  <h3>Historial</h3>
-  <ul id="historial"></ul>
+<h2>💸 Control de Dinero</h2>
+<input type="number" id="cantidad" placeholder="Cantidad">
+<br>
+<button onclick="depositar()">Depositar</button>
+<button onclick="retirar()">Retirar</button>
+<h3 id="total">Total: $0</h3>
+<h3>Historial</h3>
+<ul id="historial"></ul>
 </div>
-
-<!-- Firebase -->
+ 
+  <!-- Firebase V8 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
 <script>
-  // 🔥 CONFIG (tuya)
-  const firebaseConfig = {
-    databaseURL: "https://proyecto-final-2e4a8-default-rtdb.firebaseio.com"
-  };
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+     // 🔥 CAMBIA SOLO ESTA URL SI ES NECESARIO
 
-  const totalRef = db.ref("app/total");
-  const historialRef = db.ref("app/historial");
+     const firebaseConfig = {
 
-  let total = 0;
-  let historial = [];
+       databaseURL: "https://proyecto-final-2e4a8-default-rtdb.firebaseio.com"
 
-  // 🔄 Cargar LOCAL
-  function cargarLocal() {
-    try {
-      total = parseFloat(localStorage.getItem("total")) || 0;
-      historial = JSON.parse(localStorage.getItem("historial")) || [];
-    } catch {
-      total = 0;
-      historial = [];
-    }
-  }
+     };
 
-  // 💾 Guardar LOCAL
-  function guardarLocal() {
-    try {
-      localStorage.setItem("total", total);
-      localStorage.setItem("historial", JSON.stringify(historial));
-    } catch {}
-  }
+     firebase.initializeApp(firebaseConfig);
+ 
+    const db = firebase.database();
+ 
+    // REFERENCIAS
 
-  // ☁️ ESCUCHAR FIREBASE
-  totalRef.on("value", snap => {
-    if (snap.exists()) {
-      total = snap.val();
-      guardarLocal();
-      actualizarUI();
-    }
-  });
+     const totalRef = db.ref("app/total");
 
-  historialRef.on("value", snap => {
-    if (snap.exists()) {
-      historial = [];
-      snap.forEach(child => {
-        historial.push({ key: child.key, ...child.val() });
-      });
-      guardarLocal();
-      actualizarUI();
-    }
-  });
+     const historialRef = db.ref("app/historial");
 
-  // 🔄 UI
-  function actualizarUI() {
-    document.getElementById("total").innerText =
-      "Total: $" + total.toFixed(2);
+     const accionRef = db.ref("app/accion");
+ 
+    // 🔥 PARA ESP32
 
-    const lista = document.getElementById("historial");
-    lista.innerHTML = "";
+     let totalActual = 0;
+ 
+    // 🔄 ACTUALIZAR TOTAL
 
-    historial.slice().reverse().forEach(item => {
-      const li = document.createElement("li");
+     totalRef.on("value", (snapshot) => {
 
-      li.innerHTML = `
-        ${item.tipo}: $${item.cantidad}
-        <span class="delete-btn" onclick="eliminar('${item.key || ''}')">❌</span>
-      `;
+       totalActual = snapshot.val() || 0;
 
-      lista.appendChild(li);
-    });
-  }
+       document.getElementById("total").innerText = "Total: $" + totalActual.toFixed(2);
 
-  // 💰 Depositar
-  function depositar() {
-    const input = document.getElementById("cantidad");
-    const cantidad = parseFloat(input.value);
+     });
+ 
+    // 🔄 ACTUALIZAR HISTORIAL
 
-    if (!cantidad || cantidad <= 0) {
-      alert("Cantidad inválida");
-      return;
-    }
+     historialRef.on("value", (snapshot) => {
 
-    total += cantidad;
+       const lista = document.getElementById("historial");
 
-    const nuevo = {
-      tipo: "Depósito",
-      cantidad: cantidad,
-      fecha: Date.now()
-    };
+       lista.innerHTML = "";
 
-    historial.push(nuevo);
+       snapshot.forEach((child) => {
 
-    guardarLocal();
-    actualizarUI();
+         const data = child.val();
 
-    // ☁️ Intentar guardar en Firebase
-    totalRef.set(total).catch(()=>{});
-    historialRef.push(nuevo).catch(()=>{});
+         const key = child.key;
 
-    input.value = "";
-  }
+         const li = document.createElement("li");
 
-  // 💸 Retirar
-  function retirar() {
-    const input = document.getElementById("cantidad");
-    const cantidad = parseFloat(input.value);
+         li.innerHTML = `${data.tipo}: $${data.cantidad} <span class="delete-btn" onclick="eliminar('${key}')">❌</span>`;
 
-    if (!cantidad || cantidad <= 0) {
-      alert("Cantidad inválida");
-      return;
-    }
+         lista.appendChild(li);
 
-    if (cantidad > total) {
-      alert("Fondos insuficientes");
-      return;
-    }
+       });
 
-    total -= cantidad;
+     });
+ 
+    // 💰 DEPOSITAR
 
-    const nuevo = {
-      tipo: "Retiro",
-      cantidad: cantidad,
-      fecha: Date.now()
-    };
+     function depositar() {
 
-    historial.push(nuevo);
+       let cantidad = parseFloat(document.getElementById("cantidad").value);
 
-    guardarLocal();
-    actualizarUI();
+       if (isNaN(cantidad) || cantidad <= 0) {
 
-    // ☁️ Firebase
-    totalRef.set(total).catch(()=>{});
-    historialRef.push(nuevo).catch(()=>{});
+         alert("Cantidad inválida");
 
-    input.value = "";
-  }
+         return;
 
-  // 🗑️ Eliminar
-  function eliminar(key) {
-    if (!key) {
-      alert("Solo se puede eliminar si está en la nube");
-      return;
-    }
+       }
 
-    historialRef.child(key).remove().catch(()=>{});
-  }
+       totalActual += cantidad;
 
-  // 🚀 INICIO
-  cargarLocal();
-  actualizarUI();
+       totalRef.set(totalActual);
+
+       historialRef.push({ tipo: "Depósito", cantidad: cantidad, fecha: Date.now() });
+
+       accionRef.set("deposito");
+
+       document.getElementById("cantidad").value = "";
+
+     }
+ 
+    // 💸 RETIRAR
+
+     function retirar() {
+
+       let cantidad = parseFloat(document.getElementById("cantidad").value);
+
+       if (isNaN(cantidad) || cantidad <= 0) {
+
+         alert("Cantidad inválida");
+
+         return;
+
+       }
+
+       if (cantidad > totalActual) {
+
+         alert("Fondos insuficientes");
+
+         return;
+
+       }
+
+       totalActual -= cantidad;
+
+       totalRef.set(totalActual);
+
+       historialRef.push({ tipo: "Retiro", cantidad: cantidad, fecha: Date.now() });
+
+       accionRef.set("retiro");
+
+       document.getElementById("cantidad").value = "";
+
+     }
+ 
+    // 🗑️ ELIMINAR TRANSACCIÓN
+
+     function eliminar(key) {
+
+       if(confirm("¿Eliminar esta transacción?")) {
+
+         historialRef.child(key).remove();
+
+       }
+
+     }
 </script>
-
 </body>
 </html>
