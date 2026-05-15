@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Control de Dinero Local</title>
+  <title>Control de Dinero</title>
 
   <style>
     body {
@@ -74,22 +74,36 @@
   let total = 0;
   let historial = [];
 
-  // 🔄 Cargar datos guardados
+  // 🔄 Cargar datos (seguro)
   function cargarDatos() {
-    total = parseFloat(localStorage.getItem("total")) || 0;
-    historial = JSON.parse(localStorage.getItem("historial")) || [];
-    actualizarUI();
+    try {
+      const t = localStorage.getItem("total");
+      const h = localStorage.getItem("historial");
+
+      total = t ? parseFloat(t) : 0;
+      historial = h ? JSON.parse(h) : [];
+
+    } catch (e) {
+      console.warn("localStorage bloqueado, usando memoria");
+      total = 0;
+      historial = [];
+    }
   }
 
-  // 💾 Guardar datos
+  // 💾 Guardar datos (seguro)
   function guardarDatos() {
-    localStorage.setItem("total", total);
-    localStorage.setItem("historial", JSON.stringify(historial));
+    try {
+      localStorage.setItem("total", total);
+      localStorage.setItem("historial", JSON.stringify(historial));
+    } catch (e) {
+      console.warn("No se pudo guardar, pero la app sigue funcionando");
+    }
   }
 
-  // 🔄 Actualizar pantalla
+  // 🔄 Actualizar UI
   function actualizarUI() {
-    document.getElementById("total").innerText = "Total: $" + total.toFixed(2);
+    document.getElementById("total").innerText =
+      "Total: $" + total.toFixed(2);
 
     const lista = document.getElementById("historial");
     lista.innerHTML = "";
@@ -99,7 +113,7 @@
 
       li.innerHTML = `
         ${item.tipo}: $${item.cantidad}
-        <span class="delete-btn" onclick="eliminar(${index})">❌</span>
+        <span class="delete-btn" onclick="eliminar(${historial.length - 1 - index})">❌</span>
       `;
 
       lista.appendChild(li);
@@ -108,7 +122,8 @@
 
   // 💰 Depositar
   function depositar() {
-    const cantidad = parseFloat(document.getElementById("cantidad").value);
+    const input = document.getElementById("cantidad");
+    const cantidad = parseFloat(input.value);
 
     if (!cantidad || cantidad <= 0) {
       alert("Cantidad inválida");
@@ -125,12 +140,13 @@
     guardarDatos();
     actualizarUI();
 
-    document.getElementById("cantidad").value = "";
+    input.value = "";
   }
 
   // 💸 Retirar
   function retirar() {
-    const cantidad = parseFloat(document.getElementById("cantidad").value);
+    const input = document.getElementById("cantidad");
+    const cantidad = parseFloat(input.value);
 
     if (!cantidad || cantidad <= 0) {
       alert("Cantidad inválida");
@@ -152,7 +168,7 @@
     guardarDatos();
     actualizarUI();
 
-    document.getElementById("cantidad").value = "";
+    input.value = "";
   }
 
   // 🗑️ Eliminar
@@ -162,8 +178,9 @@
     actualizarUI();
   }
 
-  // 🚀 Iniciar
+  // 🚀 INICIAR
   cargarDatos();
+  actualizarUI();
 </script>
 
 </body>
