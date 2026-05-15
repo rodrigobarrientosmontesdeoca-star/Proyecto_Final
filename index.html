@@ -2,22 +2,22 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Control de Dinero Cloud</title>
+  <title>Control de Dinero Local</title>
 
   <style>
     body {
-      background: linear-gradient(135deg, #0b0b0b, #1a1a1a);
-      color: #fff;
+      background: #111;
+      color: white;
       font-family: Arial;
       text-align: center;
     }
 
     .container {
-      margin: 60px auto;
+      margin: 50px auto;
       width: 350px;
-      padding: 25px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.08);
+      padding: 20px;
+      border-radius: 10px;
+      background: #222;
     }
 
     input, button {
@@ -38,7 +38,7 @@
     }
 
     li {
-      background: rgba(255,255,255,0.1);
+      background: #333;
       margin: 5px;
       padding: 8px;
       border-radius: 6px;
@@ -70,119 +70,100 @@
   <ul id="historial"></ul>
 </div>
 
-<!-- Firebase v8 -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
 <script>
-  // 🔥 SOLO databaseURL (como tu proyecto)
-  const firebaseConfig = {
-    databaseURL: "https://proyecto-final-2e4a8-default-rtdb.firebaseio.com"
-  };
+  let total = 0;
+  let historial = [];
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+  // 🔄 Cargar datos guardados
+  function cargarDatos() {
+    total = parseFloat(localStorage.getItem("total")) || 0;
+    historial = JSON.parse(localStorage.getItem("historial")) || [];
+    actualizarUI();
+  }
 
-  const totalRef = db.ref("app/total");
-  const historialRef = db.ref("app/historial");
+  // 💾 Guardar datos
+  function guardarDatos() {
+    localStorage.setItem("total", total);
+    localStorage.setItem("historial", JSON.stringify(historial));
+  }
 
-  let totalActual = 0;
+  // 🔄 Actualizar pantalla
+  function actualizarUI() {
+    document.getElementById("total").innerText = "Total: $" + total.toFixed(2);
 
-  // 🔄 ESCUCHAR TOTAL
-  totalRef.on("value", snap => {
-    totalActual = snap.val() || 0;
-    document.getElementById("total").innerText =
-      "Total: $" + totalActual.toFixed(2);
-  });
-
-  // 🔄 ESCUCHAR HISTORIAL
-  historialRef.on("value", snap => {
     const lista = document.getElementById("historial");
     lista.innerHTML = "";
 
-    snap.forEach(child => {
-      const data = child.val();
-      const key = child.key;
-
+    historial.slice().reverse().forEach((item, index) => {
       const li = document.createElement("li");
+
       li.innerHTML = `
-        ${data.tipo}: $${data.cantidad}
-        <span class="delete-btn" onclick="eliminar('${key}')">❌</span>
+        ${item.tipo}: $${item.cantidad}
+        <span class="delete-btn" onclick="eliminar(${index})">❌</span>
       `;
 
       lista.appendChild(li);
     });
-  });
-
-  // 💰 DEPOSITAR
-  function depositar() {
-    const input = document.getElementById("cantidad");
-    const cantidad = parseFloat(input.value);
-
-    if (isNaN(cantidad) || cantidad <= 0) {
-      alert("Cantidad inválida");
-      return;
-    }
-
-    const nuevoTotal = totalActual + cantidad;
-
-    totalRef.set(nuevoTotal)
-      .then(() => {
-        return historialRef.push({
-          tipo: "Depósito",
-          cantidad: cantidad,
-          fecha: Date.now()
-        });
-      })
-      .then(() => {
-        input.value = "";
-      })
-      .catch(err => {
-        console.error(err);
-        alert("Error al guardar (revisa reglas)");
-      });
   }
 
-  // 💸 RETIRAR
-  function retirar() {
-    const input = document.getElementById("cantidad");
-    const cantidad = parseFloat(input.value);
+  // 💰 Depositar
+  function depositar() {
+    const cantidad = parseFloat(document.getElementById("cantidad").value);
 
-    if (isNaN(cantidad) || cantidad <= 0) {
+    if (!cantidad || cantidad <= 0) {
       alert("Cantidad inválida");
       return;
     }
 
-    if (cantidad > totalActual) {
+    total += cantidad;
+
+    historial.push({
+      tipo: "Depósito",
+      cantidad: cantidad
+    });
+
+    guardarDatos();
+    actualizarUI();
+
+    document.getElementById("cantidad").value = "";
+  }
+
+  // 💸 Retirar
+  function retirar() {
+    const cantidad = parseFloat(document.getElementById("cantidad").value);
+
+    if (!cantidad || cantidad <= 0) {
+      alert("Cantidad inválida");
+      return;
+    }
+
+    if (cantidad > total) {
       alert("Fondos insuficientes");
       return;
     }
 
-    const nuevoTotal = totalActual - cantidad;
+    total -= cantidad;
 
-    totalRef.set(nuevoTotal)
-      .then(() => {
-        return historialRef.push({
-          tipo: "Retiro",
-          cantidad: cantidad,
-          fecha: Date.now()
-        });
-      })
-      .then(() => {
-        input.value = "";
-      })
-      .catch(err => {
-        console.error(err);
-        alert("Error al guardar");
-      });
+    historial.push({
+      tipo: "Retiro",
+      cantidad: cantidad
+    });
+
+    guardarDatos();
+    actualizarUI();
+
+    document.getElementById("cantidad").value = "";
   }
 
-  // 🗑️ ELIMINAR
-  function eliminar(key) {
-    if (confirm("¿Eliminar?")) {
-      historialRef.child(key).remove();
-    }
+  // 🗑️ Eliminar
+  function eliminar(index) {
+    historial.splice(index, 1);
+    guardarDatos();
+    actualizarUI();
   }
+
+  // 🚀 Iniciar
+  cargarDatos();
 </script>
 
 </body>
