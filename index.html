@@ -1,45 +1,62 @@
 <script>
-  // 🔥 TU CONFIG CON TOKEN
   const BASE_URL = "https://proyecto-final-2e4a8-default-rtdb.firebaseio.com";
   const AUTH = "lnR36eAFqYj3okpIqjvukBwynaEVWHOrdC6vAuaB";
 
   let total = 0;
   let historial = [];
 
-  // 🔄 LEER DATOS
+  // 🔄 LEER DATOS (CORREGIDO)
   async function cargarFirebase() {
     try {
       const res = await fetch(`${BASE_URL}/app.json?auth=${AUTH}`);
+
+      if (!res.ok) throw new Error("Error en conexión");
+
       const data = await res.json();
+
+      console.log("DATA:", data); // 👈 CLAVE PARA DEBUG
 
       if (data) {
         total = data.total || 0;
+
         historial = data.historial
           ? Object.values(data.historial)
           : [];
       }
 
-      actualizarUI();
-
     } catch (e) {
-      console.error("Error al leer Firebase:", e);
+      console.error("Firebase falló:", e);
+
+      // 👉 IMPORTANTE: evitar pantalla vacía
+      total = 0;
+      historial = [];
     }
+
+    actualizarUI(); // 👈 SIEMPRE se ejecuta
   }
 
   // 💾 GUARDAR TOTAL
   async function guardarTotal() {
-    await fetch(`${BASE_URL}/app/total.json?auth=${AUTH}`, {
-      method: "PUT",
-      body: JSON.stringify(total)
-    });
+    try {
+      await fetch(`${BASE_URL}/app/total.json?auth=${AUTH}`, {
+        method: "PUT",
+        body: JSON.stringify(total)
+      });
+    } catch (e) {
+      console.error("Error guardando total:", e);
+    }
   }
 
   // 💾 GUARDAR HISTORIAL
   async function guardarHistorial(item) {
-    await fetch(`${BASE_URL}/app/historial.json?auth=${AUTH}`, {
-      method: "POST",
-      body: JSON.stringify(item)
-    });
+    try {
+      await fetch(`${BASE_URL}/app/historial.json?auth=${AUTH}`, {
+        method: "POST",
+        body: JSON.stringify(item)
+      });
+    } catch (e) {
+      console.error("Error guardando historial:", e);
+    }
   }
 
   // 🔄 UI
@@ -53,9 +70,7 @@
     historial.slice().reverse().forEach(item => {
       const li = document.createElement("li");
 
-      li.innerHTML = `
-        ${item.tipo}: $${item.cantidad}
-      `;
+      li.innerHTML = `${item.tipo}: $${item.cantidad}`;
 
       lista.appendChild(li);
     });
@@ -82,7 +97,6 @@
 
     actualizarUI();
 
-    // 🔥 GUARDAR EN FIREBASE
     guardarTotal();
     guardarHistorial(nuevo);
 
@@ -115,7 +129,6 @@
 
     actualizarUI();
 
-    // 🔥 FIREBASE
     guardarTotal();
     guardarHistorial(nuevo);
 
