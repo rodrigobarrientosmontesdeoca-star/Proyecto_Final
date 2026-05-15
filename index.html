@@ -1,333 +1,127 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<title>Control de Dinero Cloud</title>
-<style>
-
-     body {
-
-       background: linear-gradient(135deg, #0b0b0b, #1a1a1a);
-
-       color: #f5f5f5;
-
-       font-family: 'Segoe UI', Arial, sans-serif;
-
-       text-align: center;
-
-       margin: 0;
-
-       padding: 0;
-
-     }
- 
-    .container {
-
-       background: rgba(255, 255, 255, 0.08);
-
-       padding: 30px;
-
-       margin: 60px auto;
-
-       width: 400px;
-
-       border-radius: 15px;
-
-       box-shadow: 0 8px 20px rgba(0,0,0,0.6);
-
-       transition: transform 0.3s ease;
-
-     }
- 
-    .container:hover {
-
-       transform: scale(1.02);
-
-     }
- 
-    h2 {
-
-       margin-bottom: 20px;
-
-       color: #00ffcc;
-
-       text-shadow: 0 0 10px #00ffcc;
-
-     }
- 
-    input {
-
-       padding: 12px;
-
-       margin: 10px 0;
-
-       width: 80%;
-
-       border: none;
-
-       border-radius: 8px;
-
-       outline: none;
-
-       background: #222;
-
-       color: #fff;
-
-       font-size: 14px;
-
-       transition: box-shadow 0.3s ease;
-
-     }
- 
-    input:focus {
-
-       box-shadow: 0 0 10px #00ffcc;
-
-     }
- 
-    button {
-
-       padding: 12px 20px;
-
-       margin: 10px;
-
-       border: none;
-
-       border-radius: 8px;
-
-       cursor: pointer;
-
-       font-weight: bold;
-
-       background: linear-gradient(135deg, #00ffcc, #0099ff);
-
-       color: #0b0b0b;
-
-       transition: background 0.3s ease, transform 0.2s ease;
-
-     }
- 
-    button:hover {
-
-       background: linear-gradient(135deg, #0099ff, #00ffcc);
-
-       transform: translateY(-2px);
-
-     }
- 
-    h3 {
-
-       margin-top: 20px;
-
-       color: #ffcc00;
-
-       text-shadow: 0 0 8px #ffcc00;
-
-     }
- 
-    ul {
-
-       text-align: left;
-
-       list-style: none;
-
-       padding: 0;
-
-       margin-top: 15px;
-
-     }
- 
-    ul li {
-
-       background: rgba(255,255,255,0.05);
-
-       padding: 10px;
-
-       margin: 5px 0;
-
-       border-radius: 8px;
-
-       display: flex;
-
-       justify-content: space-between;
-
-       align-items: center;
-
-       transition: background 0.3s ease;
-
-     }
- 
-    ul li:hover {
-
-       background: rgba(255,255,255,0.15);
-
-     }
- 
-    .delete-btn {
-
-       color: #ff4444;
-
-       cursor: pointer;
-
-       font-size: 18px;
-
-       transition: transform 0.2s ease;
-
-     }
- 
-    .delete-btn:hover {
-
-       transform: scale(1.2);
-
-     }
-</style>
-</head>
-<body>
-<div class="container">
-<h2>💸 Control de Dinero</h2>
-<input type="number" id="cantidad" placeholder="Cantidad">
-<br>
-<button onclick="depositar()">Depositar</button>
-<button onclick="retirar()">Retirar</button>
-<h3 id="total">Total: $0</h3>
-<h3>Historial</h3>
-<ul id="historial"></ul>
-</div>
- 
-  <!-- Firebase V8 -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <script>
+  // 🔥 TU CONFIG CON TOKEN
+  const BASE_URL = "https://proyecto-final-2e4a8-default-rtdb.firebaseio.com";
+  const AUTH = "lnR36eAFqYj3okpIqjvukBwynaEVWHOrdC6vAuaB";
 
-     // 🔥 CAMBIA SOLO ESTA URL SI ES NECESARIO
+  let total = 0;
+  let historial = [];
 
-     const firebaseConfig = {
+  // 🔄 LEER DATOS
+  async function cargarFirebase() {
+    try {
+      const res = await fetch(`${BASE_URL}/app.json?auth=${AUTH}`);
+      const data = await res.json();
 
-       databaseURL: "https://proyecto-final-2e4a8-default-rtdb.firebaseio.com"
+      if (data) {
+        total = data.total || 0;
+        historial = data.historial
+          ? Object.values(data.historial)
+          : [];
+      }
 
-     };
+      actualizarUI();
 
-     firebase.initializeApp(firebaseConfig);
- 
-    const db = firebase.database();
- 
-    // REFERENCIAS
+    } catch (e) {
+      console.error("Error al leer Firebase:", e);
+    }
+  }
 
-     const totalRef = db.ref("app/total");
+  // 💾 GUARDAR TOTAL
+  async function guardarTotal() {
+    await fetch(`${BASE_URL}/app/total.json?auth=${AUTH}`, {
+      method: "PUT",
+      body: JSON.stringify(total)
+    });
+  }
 
-     const historialRef = db.ref("app/historial");
+  // 💾 GUARDAR HISTORIAL
+  async function guardarHistorial(item) {
+    await fetch(`${BASE_URL}/app/historial.json?auth=${AUTH}`, {
+      method: "POST",
+      body: JSON.stringify(item)
+    });
+  }
 
-     const accionRef = db.ref("app/accion");
- 
-    // 🔥 PARA ESP32
+  // 🔄 UI
+  function actualizarUI() {
+    document.getElementById("total").innerText =
+      "Total: $" + total.toFixed(2);
 
-     let totalActual = 0;
- 
-    // 🔄 ACTUALIZAR TOTAL
+    const lista = document.getElementById("historial");
+    lista.innerHTML = "";
 
-     totalRef.on("value", (snapshot) => {
+    historial.slice().reverse().forEach(item => {
+      const li = document.createElement("li");
 
-       totalActual = snapshot.val() || 0;
+      li.innerHTML = `
+        ${item.tipo}: $${item.cantidad}
+      `;
 
-       document.getElementById("total").innerText = "Total: $" + totalActual.toFixed(2);
+      lista.appendChild(li);
+    });
+  }
 
-     });
- 
-    // 🔄 ACTUALIZAR HISTORIAL
+  // 💰 DEPOSITAR
+  function depositar() {
+    const cantidad = parseFloat(document.getElementById("cantidad").value);
 
-     historialRef.on("value", (snapshot) => {
+    if (!cantidad || cantidad <= 0) {
+      alert("Cantidad inválida");
+      return;
+    }
 
-       const lista = document.getElementById("historial");
+    total += cantidad;
 
-       lista.innerHTML = "";
+    const nuevo = {
+      tipo: "Depósito",
+      cantidad: cantidad,
+      fecha: Date.now()
+    };
 
-       snapshot.forEach((child) => {
+    historial.push(nuevo);
 
-         const data = child.val();
+    actualizarUI();
 
-         const key = child.key;
+    // 🔥 GUARDAR EN FIREBASE
+    guardarTotal();
+    guardarHistorial(nuevo);
 
-         const li = document.createElement("li");
+    document.getElementById("cantidad").value = "";
+  }
 
-         li.innerHTML = `${data.tipo}: $${data.cantidad} <span class="delete-btn" onclick="eliminar('${key}')">❌</span>`;
+  // 💸 RETIRAR
+  function retirar() {
+    const cantidad = parseFloat(document.getElementById("cantidad").value);
 
-         lista.appendChild(li);
+    if (!cantidad || cantidad <= 0) {
+      alert("Cantidad inválida");
+      return;
+    }
 
-       });
+    if (cantidad > total) {
+      alert("Fondos insuficientes");
+      return;
+    }
 
-     });
- 
-    // 💰 DEPOSITAR
+    total -= cantidad;
 
-     function depositar() {
+    const nuevo = {
+      tipo: "Retiro",
+      cantidad: cantidad,
+      fecha: Date.now()
+    };
 
-       let cantidad = parseFloat(document.getElementById("cantidad").value);
+    historial.push(nuevo);
 
-       if (isNaN(cantidad) || cantidad <= 0) {
+    actualizarUI();
 
-         alert("Cantidad inválida");
+    // 🔥 FIREBASE
+    guardarTotal();
+    guardarHistorial(nuevo);
 
-         return;
+    document.getElementById("cantidad").value = "";
+  }
 
-       }
-
-       totalActual += cantidad;
-
-       totalRef.set(totalActual);
-
-       historialRef.push({ tipo: "Depósito", cantidad: cantidad, fecha: Date.now() });
-
-       accionRef.set("deposito");
-
-       document.getElementById("cantidad").value = "";
-
-     }
- 
-    // 💸 RETIRAR
-
-     function retirar() {
-
-       let cantidad = parseFloat(document.getElementById("cantidad").value);
-
-       if (isNaN(cantidad) || cantidad <= 0) {
-
-         alert("Cantidad inválida");
-
-         return;
-
-       }
-
-       if (cantidad > totalActual) {
-
-         alert("Fondos insuficientes");
-
-         return;
-
-       }
-
-       totalActual -= cantidad;
-
-       totalRef.set(totalActual);
-
-       historialRef.push({ tipo: "Retiro", cantidad: cantidad, fecha: Date.now() });
-
-       accionRef.set("retiro");
-
-       document.getElementById("cantidad").value = "";
-
-     }
- 
-    // 🗑️ ELIMINAR TRANSACCIÓN
-
-     function eliminar(key) {
-
-       if(confirm("¿Eliminar esta transacción?")) {
-
-         historialRef.child(key).remove();
-
-       }
-
-     }
+  // 🚀 INICIO
+  cargarFirebase();
 </script>
-</body>
-</html>
