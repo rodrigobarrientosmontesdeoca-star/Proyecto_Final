@@ -1,140 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💸 Control de Dinero | Cloud Edition</title>
+<style>
+    :root {
+        --aqua: #00ffcc;
+        --sky: #0099ff;
+        --gold: #ffcc00;
+        --danger: #ff4444;
+        --dark: #0b0b0b;
+    }
+
+    body {
+        background-color: var(--dark);
+        background-image: radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
+                          radial-gradient(white, rgba(255,255,255,.1) 1px, transparent 30px);
+        background-size: 550px 550px, 350px 350px;
+        color: white;
+        font-family: 'Segoe UI', Tahoma, sans-serif;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+    }
+
+    header {
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .logo {
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: var(--aqua);
+        text-shadow: 0 0 15px var(--aqua);
+        margin-bottom: 10px;
+    }
+
+    .container {
+        width: 90%;
+        max-width: 500px;
+        background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(12px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 30px;
+        box-shadow: 0 0 40px rgba(0, 255, 204, 0.15);
+        margin-bottom: 50px;
+    }
+
+    h2 {
+        text-align: center;
+        font-weight: 300;
+        color: var(--gold);
+        margin-bottom: 25px;
+    }
+
+    .input-group { margin-bottom: 15px; }
+
+    label {
+        display: block;
+        font-size: 0.8rem;
+        color: #aaa;
+        margin-bottom: 5px;
+        margin-left: 5px;
+    }
+
+    input {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #333;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        font-size: 1rem;
+        outline: none;
+    }
+
+    input:focus { border-color: var(--aqua); }
+
+    .btn {
+        width: 48%;
+        padding: 12px;
+        background: linear-gradient(135deg, var(--aqua), var(--sky));
+        color: black;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+        margin-top: 10px;
+    }
+
+    .btn:hover { transform: scale(1.02); }
+
+    .money-list {
+        list-style: none;
+        padding: 0;
+        margin-top: 30px;
+    }
+
+    .money-item {
+        background: rgba(255,255,255,0.03);
+        padding: 15px;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        border-left: 5px solid var(--gold);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .delete-btn {
+        background: rgba(255, 68, 68, 0.1);
+        border: 1px solid var(--danger);
+        color: var(--danger);
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .delete-btn:hover { background: var(--danger); color: white; }
+
+    footer {
+        margin-top: auto;
+        padding: 20px;
+        color: #444;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <div class="logo">Control de Dinero</div>
+</header>
+
+<div class="container">
+    <h2>Transacciones en la Nube</h2>
+    <div class="input-group">
+        <label>Cantidad</label>
+        <input type="number" id="cantidad" placeholder="Ej: 500">
+    </div>
+    <div style="display:flex; justify-content:space-between;">
+        <button class="btn" onclick="depositar()">Depositar</button>
+        <button class="btn" onclick="retirar()">Retirar</button>
+    </div>
+    <h3 id="total">Total: $0</h3>
+    <ul class="money-list" id="historial"></ul>
+</div>
+
+<footer>
+    Proyecto Final - Cloud Systems 2026
+</footer>
+
+<!-- Firebase V8 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
 <script>
-  const BASE_URL = "https://proyecto-final-2e4a8-default-rtdb.firebaseio.com";
-  const AUTH = "lnR36eAFqYj3okpIqjvukBwynaEVWHOrdC6vAuaB";
+    // 1. Configuración de Firebase
+    const firebaseConfig = {
+        databaseURL: "https://proyecto-final-2e4a8-default-rtdb.firebaseio.com"
+    };
 
-  let total = 0;
-  let historial = [];
+    // 2. Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
 
-  // 🔄 LEER DATOS (CORREGIDO)
-  async function cargarFirebase() {
-    try {
-      const res = await fetch(`${BASE_URL}/app.json?auth=${AUTH}`);
-
-      if (!res.ok) throw new Error("Error en conexión");
-
-      const data = await res.json();
-
-      console.log("DATA:", data); // 👈 CLAVE PARA DEBUG
-
-      if (data) {
-        total = data.total || 0;
-
-        historial = data.historial
-          ? Object.values(data.historial)
-          : [];
-      }
-
-    } catch (e) {
-      console.error("Firebase falló:", e);
-
-      // 👉 IMPORTANTE: evitar pantalla vacía
-      total = 0;
-      historial = [];
+    // 3. Función para DEPOSITAR
+    function depositar() {
+        const cantidad = parseFloat(document.getElementById('cantidad').value);
+        if (isNaN(cantidad) || cantidad <= 0) {
+            alert("Cantidad inválida");
+            return;
+        }
+        database.ref('app/historial/').push({
+            tipo: "Depósito",
+            cantidad: cantidad,
+            fecha: Date.now()
+        });
+        actualizarTotal(cantidad, true);
+        document.getElementById('cantidad').value = '';
     }
 
-    actualizarUI(); // 👈 SIEMPRE se ejecuta
-  }
-
-  // 💾 GUARDAR TOTAL
-  async function guardarTotal() {
-    try {
-      await fetch(`${BASE_URL}/app/total.json?auth=${AUTH}`, {
-        method: "PUT",
-        body: JSON.stringify(total)
-      });
-    } catch (e) {
-      console.error("Error guardando total:", e);
+    // 4. Función para RETIRAR
+    function retirar() {
+        const cantidad = parseFloat(document.getElementById('cantidad').value);
+        if (isNaN(cantidad) || cantidad <= 0) {
+            alert("Cantidad inválida");
+            return;
+        }
+        database.ref('app/historial/').push({
+            tipo: "Retiro",
+            cantidad: cantidad,
+            fecha: Date.now()
+        });
+        actualizarTotal(cantidad, false);
+        document.getElementById('cantidad').value = '';
     }
-  }
 
-  // 💾 GUARDAR HISTORIAL
-  async function guardarHistorial(item) {
-    try {
-      await fetch(`${BASE_URL}/app/historial.json?auth=${AUTH}`, {
-        method: "POST",
-        body: JSON.stringify(item)
-      });
-    } catch (e) {
-      console.error("Error guardando historial:", e);
+    // 5. Función para ACTUALIZAR TOTAL
+    function actualizarTotal(cantidad, esDeposito) {
+        database.ref('app/total').once('value').then((snapshot) => {
+            let total = snapshot.val() || 0;
+            total = esDeposito ? total + cantidad : total - cantidad;
+            if (total < 0) { alert("Fondos insuficientes"); return; }
+            database.ref('app/total').set(total);
+        });
     }
-  }
 
-  // 🔄 UI
-  function actualizarUI() {
-    document.getElementById("total").innerText =
-      "Total: $" + total.toFixed(2);
-
-    const lista = document.getElementById("historial");
-    lista.innerHTML = "";
-
-    historial.slice().reverse().forEach(item => {
-      const li = document.createElement("li");
-
-      li.innerHTML = `${item.tipo}: $${item.cantidad}`;
-
-      lista.appendChild(li);
+    // 6. Sincronización en tiempo real
+    database.ref('app/total').on('value', (snap) => {
+        document.getElementById('total').innerText = "Total: $" + (snap.val() || 0);
     });
-  }
 
-  // 💰 DEPOSITAR
-  function depositar() {
-    const cantidad = parseFloat(document.getElementById("cantidad").value);
+    database.ref('app/historial').on('value', (snapshot) => {
+        const list = document.getElementById('historial');
+        list.innerHTML = '';
+        snapshot.forEach((child) => {
+            const data = child.val();
+            const key = child.key;
+            const li = document.createElement('li');
+            li.className = 'money-item';
+            li.innerHTML = `
+                <div>
+                    <b>${data.tipo}</b>: $${data.cantidad}
+                </div>
+                <button class="delete-btn" onclick="eliminar('${key}')">Eliminar</button>
+            `;
+            list.appendChild(li);
+        });
+    });
 
-    if (!cantidad || cantidad <= 0) {
-      alert("Cantidad inválida");
-      return;
+    // 7. Función para ELIMINAR
+    function eliminar(key) {
+        if (confirm("¿Eliminar esta transacción?")) {
+            database.ref('app/historial/' + key).remove();
+        }
     }
-
-    total += cantidad;
-
-    const nuevo = {
-      tipo: "Depósito",
-      cantidad: cantidad,
-      fecha: Date.now()
-    };
-
-    historial.push(nuevo);
-
-    actualizarUI();
-
-    guardarTotal();
-    guardarHistorial(nuevo);
-
-    document.getElementById("cantidad").value = "";
-  }
-
-  // 💸 RETIRAR
-  function retirar() {
-    const cantidad = parseFloat(document.getElementById("cantidad").value);
-
-    if (!cantidad || cantidad <= 0) {
-      alert("Cantidad inválida");
-      return;
-    }
-
-    if (cantidad > total) {
-      alert("Fondos insuficientes");
-      return;
-    }
-
-    total -= cantidad;
-
-    const nuevo = {
-      tipo: "Retiro",
-      cantidad: cantidad,
-      fecha: Date.now()
-    };
-
-    historial.push(nuevo);
-
-    actualizarUI();
-
-    guardarTotal();
-    guardarHistorial(nuevo);
-
-    document.getElementById("cantidad").value = "";
-  }
-
-  // 🚀 INICIO
-  cargarFirebase();
 </script>
+</body>
+</html>
